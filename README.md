@@ -39,6 +39,16 @@ Wealth management software like Addepar, eMoney and Black Diamond costs thousand
 
 The answer is this platform. It is my second project after [Intrinsic](https://github.com/btx-dysmas/intrinsic-terminal), an equity research terminal. Intrinsic shows I understand markets and valuation; Family Office OS shows I understand wealth management and private banking.
 
+## Project timeline
+
+| When | What happened |
+|---|---|
+| **2024** | First experiments in Visual Studio Code alongside Intrinsic: early portfolio and planning calculations |
+| **October 23, 2025** | Started this version of the platform |
+| **2026** | Rebuilt it around an Investment Policy Statement as a full-stack Next.js and TypeScript platform, and published it on GitHub and Vercel |
+
+The [development log](docs/DEVLOG.md) covers how the current version was designed and built.
+
 ## Built around an Investment Policy Statement
 
 Most student dashboards show numbers. Institutional investors start from governance: a written policy that sets objectives, risk limits, liquidity needs, spending rules and allocation ranges, which every later decision is measured against.
