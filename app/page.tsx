@@ -69,19 +69,19 @@ export default function Dashboard() {
         <Panel title="Households" sub="Portfolio figures cover accounts managed under each family's investment policy" pad={false}>
           <div className="overflow-x-auto">
             <table className="grid-table">
-              <thead><tr><th>Household</th><th className="r">Net worth</th><th className="r">Invested</th><th className="r">Cash</th><th className="r">1-yr return</th><th className="r">Exp. volatility</th><th>Retirement</th><th>Policy</th><th>Next meeting</th></tr></thead>
+              <thead><tr><th>Household</th><th className="r">Net worth</th><th className="r">Invested</th><th className="r hidden 2xl:table-cell">Cash</th><th className="r">1-yr return</th><th className="r hidden 2xl:table-cell">Exp. volatility</th><th>Retirement</th><th>Policy</th><th className="hidden 2xl:table-cell">Next meeting</th></tr></thead>
               <tbody>
                 {rows.map(({ h, v, mc, breaches, watch, stats, oneYear }) => (
                   <tr key={h.id}>
-                    <td><Link href={`/households/${h.id}`} className="font-medium hover:text-gold">{h.name}</Link><div className="text-[11.5px] text-muted-foreground">{h.tier} · {h.state}</div></td>
+                    <td className="whitespace-nowrap"><Link href={`/households/${h.id}`} className="font-medium hover:text-gold">{h.name}</Link><div className="text-[11.5px] text-muted-foreground">{h.tier} · {h.state}</div></td>
                     <td className="r">{money(v.netWorth)}</td>
                     <td className="r">{money(v.policy)}</td>
-                    <td className="r">{money(v.cash)}</td>
+                    <td className="r hidden 2xl:table-cell">{money(v.cash)}</td>
                     <td className={`r ${tone(oneYear)}`}>{oneYear == null ? "…" : pct(oneYear, 1, true)}</td>
-                    <td className="r">{pct(stats.vol)}</td>
+                    <td className="r hidden 2xl:table-cell">{pct(stats.vol)}</td>
                     <td><div className="flex items-center gap-2"><Ring value={mc.success} size={34} /></div></td>
                     <td>{breaches ? <Pill kind="Breach">{breaches} breach{breaches > 1 ? "es" : ""}</Pill> : watch ? <Pill kind="Watch">{watch} to watch</Pill> : <Pill kind="Compliant">Compliant</Pill>}</td>
-                    <td className="text-muted-foreground">{h.nextMeeting ? date(h.nextMeeting) : "—"}</td>
+                    <td className="hidden whitespace-nowrap text-muted-foreground 2xl:table-cell">{h.nextMeeting ? date(h.nextMeeting) : "—"}</td>
                   </tr>
                 ))}
               </tbody>
