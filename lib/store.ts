@@ -1,6 +1,6 @@
 "use client";
 // Client-side book of business. Households live in the browser (localStorage) so the app needs no database;
-// "Reset demo data" restores the seeded households.
+// "Reset demo data" restores the seeded households; "Start empty book" removes them.
 import { useSyncExternalStore } from "react";
 import { SEED } from "./seed";
 import type { Household } from "./types";
@@ -64,6 +64,9 @@ export const actions = {
   },
   setWatch(watch: string[]) {
     set({ watch });
+  },
+  clear() {
+    set({ households: [] });
   },
   reset() {
     set({ households: SEED, watch: DEFAULT_WATCH });

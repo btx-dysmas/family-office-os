@@ -1,5 +1,8 @@
 "use client";
-import { GraduationCap, Home, Landmark, Palmtree, ShoppingBag } from "lucide-react";
+import { GraduationCap, Home, Landmark, Palmtree, ShoppingBag, Users } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { actions } from "@/lib/store";
 import { Pill, Ring } from "@/components/kit";
 import { money, pct, thisYear } from "@/lib/format";
 import type { HeatCell } from "@/lib/risk";
@@ -78,6 +81,21 @@ export function HeatGrid({ cells, compact = false }: { cells: HeatCell[]; compac
           {!compact && <p className="mt-2 text-[11.5px] leading-snug text-foreground/70">{c.driver}</p>}
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Shown when the advisor has cleared the demo households and not yet added any. */
+export function EmptyBook() {
+  return (
+    <div className="panel flex flex-col items-center px-6 py-16 text-center">
+      <span className="grid size-12 place-items-center rounded-full bg-gold/10 ring-1 ring-gold/30"><Users className="size-5 text-gold" /></span>
+      <h2 className="mt-4 font-serif text-[28px]">Your book is empty</h2>
+      <p className="mt-2 max-w-md text-[13.5px] text-muted-foreground">Create a household to start: enter the family, their accounts and goals, and the platform builds the investment policy, plan and risk profile. Households are saved in this browser.</p>
+      <div className="mt-6 flex gap-2">
+        <Button render={<Link href="/households" />}>Create a household</Button>
+        <Button variant="outline" onClick={() => actions.reset()}>Restore demo households</Button>
+      </div>
     </div>
   );
 }

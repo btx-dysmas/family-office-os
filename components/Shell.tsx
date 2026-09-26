@@ -1,5 +1,5 @@
 "use client";
-import { BookOpen, Building2, Gauge, Landmark, LineChart, ListChecks, RotateCcw, Scale, Search, Star, Users } from "lucide-react";
+import { BookOpen, Building2, Eraser, Gauge, Landmark, LineChart, ListChecks, RotateCcw, Scale, Search, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -58,8 +58,12 @@ function Sidebar() {
         <div className="text-[13px] font-medium">Noah Williams</div>
         <div className="text-[11.5px] text-muted-foreground">Private Wealth Advisor</div>
         <button onClick={() => confirm("Restore the four demo households and discard changes?") && actions.reset()}
-          className="mt-3 inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground hover:text-foreground">
+          className="mt-3 flex items-center gap-1.5 text-[11.5px] text-muted-foreground hover:text-foreground">
           <RotateCcw className="size-3" /> Reset demo data
+        </button>
+        <button onClick={() => confirm("Remove every household and start with an empty book? You can restore the demo households later.") && actions.clear()}
+          className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted-foreground hover:text-foreground">
+          <Eraser className="size-3" /> Start empty book
         </button>
       </div>
     </aside>

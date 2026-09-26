@@ -1,5 +1,5 @@
 "use client";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -93,6 +93,13 @@ export default function Households() {
     <>
       <PageHeader eyebrow="Book of business" title="Households" sub="Every family's complete financial picture: balance sheet, entities, policy, plan and relationship."
         actions={<Button onClick={() => setOpen(true)}><Plus /> New household</Button>} />
+      {!rows.length && (
+        <div className="panel flex flex-col items-center px-6 py-16 text-center">
+          <h2 className="font-serif text-[28px]">No households yet</h2>
+          <p className="mt-2 max-w-md text-[13.5px] text-muted-foreground">Add a family with the intake form. The platform creates their accounts in a model portfolio, an investment policy statement, a retirement goal and a first task.</p>
+          <div className="mt-6 flex gap-2"><Button onClick={() => setOpen(true)}><Plus /> New household</Button><Button variant="outline" onClick={() => actions.reset()}>Restore demo households</Button></div>
+        </div>
+      )}
       <div className="grid gap-4 md:grid-cols-2">
         {rows.map(({ h, v, mc }) => (
           <Link key={h.id} href={`/households/${h.id}`} className="panel group flex gap-5 p-5 transition-colors hover:border-gold/40">
@@ -100,7 +107,12 @@ export default function Households() {
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <div><div className="font-serif text-[24px] leading-tight group-hover:text-gold">{h.name}</div><div className="text-[12px] text-muted-foreground">{clients(h).map((p) => `${p.name.split(",")[0]} (${ageOn(p.dob)})`).join(" · ")}</div></div>
-                <Pill kind="gold">{h.ips.profile}</Pill>
+                <div className="flex items-center gap-2">
+                  <Pill kind="gold">{h.ips.profile}</Pill>
+                  <button aria-label={`Delete ${h.name}`} title="Delete household"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm(`Delete ${h.name}? This removes the household from this browser.`)) actions.remove(h.id); }}
+                    className="rounded p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-neg focus:opacity-100"><Trash2 className="size-4" /></button>
+                </div>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-[12px]">
                 <div><div className="text-muted-foreground">Net worth</div><div className="num text-[15px] font-semibold">{money(v.netWorth)}</div></div>

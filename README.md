@@ -2,6 +2,8 @@
 
 **A wealth management platform for private bankers, built around an Investment Policy Statement and powered entirely by free public data.**
 
+**Live demo:** [family-office-os-gamma.vercel.app](https://family-office-os-gamma.vercel.app/)
+
 Most portfolio tools answer "what is this account worth?" Family Office OS answers the question a private banker actually gets asked: *is this family going to be okay?* It brings a household's whole financial life into one place (entities and trusts, investments, real estate, private holdings, debts, goals, taxes and heirs) and runs every number through a written investment policy, a goal-based Monte Carlo plan, stress tests and an estate projection.
 
 ![Household overview](docs/screenshots/household.png)
@@ -69,6 +71,7 @@ Every household here has a real IPS (objectives, risk tolerance, time horizon, l
 
 | Area | Features |
 |---|---|
+| **Your own book** | Four demo families load by default. "Start empty book" clears them, households can be deleted one at a time, and "Reset demo data" brings the demos back. Everything is saved in your browser. |
 | **Advisor dashboard** | Book-wide net worth, assets under advisement, cash, retirement probability, allocation, the economic regime, the yield curve and an attention queue (policy breaches, tasks, birthdays, meetings). |
 | **Household balance sheet** | Accounts at live prices, real estate, private equity, venture, businesses, art and aircraft, liabilities, net worth, debt ratio and liquidity ratio. |
 | **Entity structure** | Individuals, joint accounts, revocable and irrevocable trusts, LLCs, foundations, donor-advised funds, custodial accounts and 529 plans, drawn as an ownership tree with estate inclusion for each. |

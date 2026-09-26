@@ -3,6 +3,7 @@ import { CalendarDays, Cake, CircleAlert, ListTodo } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import { Dot, Loading, Panel, PageHeader, Pill, Ring, Stat } from "@/components/kit";
+import { EmptyBook } from "@/components/widgets";
 import Plot from "@/components/Plot";
 import { analyze, type Prices } from "@/lib/analytics";
 import { donut, yieldCurve } from "@/lib/charts";
@@ -52,6 +53,8 @@ export default function Dashboard() {
     ...r.h.people.filter((p) => nextBirthday(p.dob) <= 30).map((p) => ({ icon: Cake, tone: "info", text: `${p.name}'s birthday in ${nextBirthday(p.dob)} days`, who: r.h, href: `/households/${r.h.id}/relationship` })),
     ...(r.h.nextMeeting && daysUntil(r.h.nextMeeting) <= 30 && daysUntil(r.h.nextMeeting) >= 0 ? [{ icon: CalendarDays, tone: "info", text: `Review meeting ${date(r.h.nextMeeting)}`, who: r.h, href: `/households/${r.h.id}/meeting` }] : []),
   ]);
+
+  if (!households.length) return <><PageHeader eyebrow="Advisor dashboard" title="Welcome" sub="Start by adding your first client household." /><EmptyBook /></>;
 
   return (
     <>
