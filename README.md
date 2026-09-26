@@ -6,6 +6,31 @@ Most portfolio tools answer "what is this account worth?" Family Office OS answe
 
 ![Household overview](docs/screenshots/household.png)
 
+## At a glance
+
+| | |
+|---|---|
+| **Scope** | 20 pages: an advisor dashboard, 12 tabs per household, a CRM, markets, research and methodology |
+| **Code** | About 6,000 lines of TypeScript across 67 files, written from scratch |
+| **Engines** | Goal-based Monte Carlo, IPS compliance, tax-aware rebalancing, asset location, tax-loss harvesting, Social Security, education, housing, estate transfer, risk profiling, historical stress replay, economic regime and an investment committee |
+| **Data** | FRED, the U.S. Treasury, Yahoo Finance and SEC N-PORT, plus 2026 IRS, SSA and College Board figures checked against the official publications |
+| **Speed** | 10,000 simulations in about 60 milliseconds, so plans recalculate as you type |
+| **Cost to run** | $0: GitHub and Vercel's free tier, no database, no paid APIs, no AI model |
+| **Documentation** | [Architecture](docs/ARCHITECTURE.md), [14 design decisions](docs/DECISIONS.md) and a [development log](docs/DEVLOG.md) |
+
+## One family, end to end
+
+Here is what the platform does with a single demo household. Michael Chen and Sofia Alvarez are two tech professionals with $5.1M, two children and 37% of their portfolio in NVDA from stock compensation:
+
+1. **The investment policy flags it.** Live compliance shows NVDA at 36.7% against a 10% single-stock limit, U.S. equities 18 points over target, and a 2008-style loss of 47% against a 35% limit.
+2. **The risk engine explains it.** NVDA carries 70% of the portfolio's risk with 37% of the money. The questionnaire scores the couple Aggressive on willingness but only Moderate on capacity, because their plan is just 62% funded.
+3. **The plan quantifies it.** Their retire-at-55 goal has a 62% probability; toggling a market crash or a job loss shows how far it falls.
+4. **The rebalancer fixes it, tax-aware.** It trims NVDA to the limit, diversifies into index funds within the same account, and estimates the cost: $807K of realized gains and about $192K of tax.
+5. **The meeting brief raises it.** Before their next review, the platform drafts the agenda: readiness down from 81% at the last review, the drift, the breaches, contribution limits and the macro backdrop.
+6. **The report documents it.** A multi-page PDF gives the family the same numbers.
+
+Every step is a rule you can read in the code, applied to public data.
+
 ---
 
 ## Why this project exists
@@ -138,6 +163,14 @@ Reference data (lib/reference.ts): IRS 2026 brackets and limits, SSA 2026 formul
 
 ## Engineering constraints and lessons learned
 
+Building a family-office platform with no budget shaped the architecture as much as the finance did. The trade-offs, each written up in [DECISIONS.md](docs/DECISIONS.md):
+
+- **No database:** households live in the browser, so there is nothing to provision or pay for
+- **No paid data:** public sources only, with official reference figures compiled in and checked each year
+- **No language model:** meeting briefs and committee views come from deterministic rules
+- **Serverless limits:** parallel fetching, CDN caching and fallbacks for filings too large to parse
+- **Everything computed client-side,** which forced the engines to be fast enough to rerun on every keystroke
+
 **No database, on purpose.** Households are stored in the browser so the whole platform runs on Vercel's free tier with nothing to provision. That makes it a single-advisor demo: a production version would add authentication and an encrypted database with per-client access controls. The data model in `lib/types.ts` is already shaped for that move.
 
 **Published figures, hardcoded once a year.** Tax brackets, Social Security bend points and tuition averages change annually. Rather than scrape them, they live in one file with their sources, and every calculation reads from there. Each figure was checked against the official publication.
@@ -147,6 +180,14 @@ Reference data (lib/reference.ts): IRS 2026 brackets and limits, SSA 2026 formul
 **The largest bond funds are too big to parse.** Vanguard Total Bond Market's N-PORT filing lists tens of thousands of positions. Rather than time out a serverless function, those funds fall back to their published top holdings, and the page says so.
 
 **Rules over a language model.** Meeting briefs and the investment committee could have been written by an LLM. Rules turned out better for this domain: every sentence is backed by a number, nothing is invented, and it costs nothing to run.
+
+## The work behind it
+
+| Document | What's in it |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | Data model, the household model, the IPS engine, Monte Carlo, planning and tax, risk and stress testing, N-PORT parsing, caching and a module map |
+| [Design decisions](docs/DECISIONS.md) | 14 decisions, each with its context, the alternatives and the consequences |
+| [Development log](docs/DEVLOG.md) | Proving the data sources, building the engines, calibrating the demo, and the bugs found by reviewing every screen |
 
 ---
 
