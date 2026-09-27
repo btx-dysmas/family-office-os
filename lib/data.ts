@@ -7,12 +7,14 @@ import type { Macro } from "./server/macro";
 import type { Household } from "./types";
 
 const cache = new Map<string, Promise<unknown>>();
+const fetchedAt = new Map<string, number>();
 
 export function fetchJson<T>(url: string): Promise<T> {
   if (!cache.has(url)) {
     const p = fetch(url).then(async (r) => {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.detail || `Request failed (${r.status})`);
+      fetchedAt.set(url, Date.now());
       return j;
     });
     p.catch(() => cache.delete(url));
@@ -30,14 +32,20 @@ export function useApi<T>(url: string | null) {
     return () => { live = false; };
   }, [url]);
   const current = state.url === url;
-  return { data: current ? state.data : null, error: current ? state.error : null, loading: !!url && (!current || (!state.data && !state.error)) };
+  return { data: current ? state.data : null, error: current ? state.error : null, loading: !!url && (!current || (!state.data && !state.error)), at: url ? fetchedAt.get(url) ?? null : null };
 }
 
 export function useQuotes(symbols: string[]) {
-  const key = [...new Set(symbols.filter((s) => s && s !== "$CASH"))].sort().join(",");
-  const { data } = useApi<Quotes>(key ? `/api/quotes?symbols=${encodeURIComponent(key)}` : null);
-  return data ?? {};
+  return useQuotesAt(symbols).quotes;
 }
+
+/** Quotes plus the time they were fetched, for "updated 4 min ago". */
+export function useQuotesAt(symbols: string[]) {
+  const key = [...new Set(symbols.filter((s) => s && s !== "$CASH"))].sort().join(",");
+  const { data, at } = useApi<Quotes>(key ? `/api/quotes?symbols=${encodeURIComponent(key)}` : null);
+  return { quotes: data ?? EMPTY, at };
+}
+const EMPTY: Quotes = {};
 
 export const useMacro = () => useApi<Macro>("/api/macro");
 

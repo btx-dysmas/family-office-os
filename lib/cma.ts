@@ -67,6 +67,35 @@ add("cash", "SGOV BIL SHV USFR VMFXX SPAXX $CASH");
 export const classify = (symbol: string): AssetClass => FUND_CLASS[symbol] ?? "us";
 export const isFund = (symbol: string) => symbol in FUND_CLASS;
 
+/** Sub-asset class for the allocation drill-down. Single stocks are grouped separately from funds. */
+const SUB: Record<string, string> = {};
+const sub = (label: string, list: string) => list.split(/\s+/).filter(Boolean).forEach((x) => (SUB[x] = label));
+sub("Total market", "VTI ITOT SCHB");
+sub("Large-cap blend", "VOO IVV SPY RSP DIA");
+sub("Large-cap growth", "VUG QQQ SCHG MGK VOOG XLK");
+sub("Dividend and value", "SCHD VTV VYM VIG DGRO");
+sub("Small and mid cap", "IWM IJR IJH VXF");
+sub("Sector funds", "XLF XLV XLE");
+sub("Developed markets", "VEA IEFA EFA SCHF");
+sub("Emerging markets", "VWO IEMG EEM");
+sub("Total international", "VXUS IXUS VEU ACWX");
+sub("Core aggregate", "BND AGG SCHZ IUSB");
+sub("Municipal", "VTEB MUB");
+sub("Inflation-protected", "TIP SCHP");
+sub("Treasuries", "VGIT IEF GOVT VGSH SHY BSV");
+sub("Long Treasuries", "TLT VGLT");
+sub("Corporate", "LQD VCIT VCSH");
+sub("High yield", "HYG JNK");
+sub("International bonds", "BNDX");
+sub("REITs", "VNQ SCHH IYR XLRE");
+sub("International REITs", "VNQI");
+sub("Precious metals", "GLD IAU SLV");
+sub("Commodities", "DBC PDBC GSG");
+sub("Managed futures and hedges", "BTAL KMLM DBMF");
+sub("T-bills", "SGOV BIL SHV USFR");
+sub("Bank deposits and money market", "$CASH VMFXX SPAXX");
+export const subclass = (symbol: string) => SUB[symbol] ?? (symbol in FUND_CLASS ? "Other funds" : "Single stocks");
+
 /** Approximate effective duration of common bond funds (years); used for interest-rate sensitivity. */
 export const DURATION: Record<string, number> = {
   BND: 5.8, AGG: 5.9, VGIT: 5.0, VGSH: 1.9, VGLT: 13.5, TLT: 16.5, IEF: 7.0, SHY: 1.9, MUB: 6.0, VTEB: 6.0, TIP: 6.5, SCHP: 6.5,

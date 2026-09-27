@@ -5,7 +5,7 @@ import type { Plan, Result } from "./montecarlo";
 import type { Macro } from "./server/macro";
 import type { Household } from "./types";
 
-export type HouseholdModel = { h: Household; v: Valuation; plan: Plan; mc: Result; quotes: Quotes; macro: Macro | null; update: (fn: (h: Household) => Household) => void };
+export type HouseholdModel = { h: Household; v: Valuation; plan: Plan; mc: Result; quotes: Quotes; quotesAt: number | null; macro: Macro | null; update: (fn: (h: Household) => Household) => void };
 
 export const HouseholdContext = createContext<HouseholdModel | null>(null);
 

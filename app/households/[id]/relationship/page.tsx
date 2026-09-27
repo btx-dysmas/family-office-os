@@ -111,6 +111,22 @@ export default function Relationship() {
           </ul>
         </Panel>
 
+        <Panel title="Documents" sub={h.beneficiaryReview ? `Beneficiary designations confirmed ${date(h.beneficiaryReview)}` : "Beneficiary designations not on file"}>
+          <ul className="divide-y divide-border/70">
+            {(h.documents ?? []).map((d) => (
+              <li key={d.id} className="flex items-start justify-between gap-3 py-2">
+                <div className="min-w-0 text-[13px]"><div className="truncate" title={d.name}>{d.name}</div><div className="text-[11.5px] text-muted-foreground">{d.status === "Signed" ? "Signed" : d.status === "Awaiting signature" ? "Sent" : "Last updated"} {date(d.date)}</div></div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Pill kind={d.status === "Signed" ? "Compliant" : d.status === "Awaiting signature" ? "Watch" : "neutral"}>{d.status}</Pill>
+                  {d.status === "Awaiting signature" && <button className="text-[11.5px] text-gold hover:underline" onClick={() => update((x) => ({ ...x, documents: (x.documents ?? []).map((y) => (y.id === d.id ? { ...y, status: "Signed", date: today() } : y)) }))}>Mark signed</button>}
+                </div>
+              </li>
+            ))}
+            {!(h.documents ?? []).length && <li className="py-2 text-[13px] text-muted-foreground">No documents tracked.</li>}
+          </ul>
+          <button className="mt-2 text-[12px] text-gold hover:underline" onClick={() => update((x) => ({ ...x, beneficiaryReview: today() }))}>Record beneficiary review today</button>
+        </Panel>
+
         <Panel title="Preferences and interests">
           <ul className="flex flex-wrap gap-2">
             {h.preferences.map((p, i) => (

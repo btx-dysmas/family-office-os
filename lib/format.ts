@@ -19,6 +19,13 @@ export const pct = (v: number | null | undefined, dp = 1, sign = false) => {
   const x = Math.abs(v * 100) < 0.5 * 10 ** -dp ? 0 : v * 100; // no "-0.0%"
   return `${sign && x > 0 ? "+" : ""}${x.toFixed(dp)}%`;
 };
+/** Simulated probability to one decimal, as calculated; "above 99.9%" rather than a false "100%". */
+export const prob = (v: number | null | undefined) => (!ok(v) ? DASH : v >= 0.9995 ? ">99.9%" : v <= 0.0005 ? "<0.1%" : `${(v * 100).toFixed(1)}%`);
+/** "4 min ago", "2 h ago", "3 days ago". */
+export const ago = (t: number | string, now = Date.now()) => {
+  const m = Math.max(0, Math.round((now - (typeof t === "number" ? t : Date.parse(t))) / 60000));
+  return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`;
+};
 export const num = (v: number | null | undefined, dp = 2) =>
   ok(v) ? (Math.abs(v) < 0.5 * 10 ** -dp ? 0 : v).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp }) : DASH;
 export const tone = (v: number | null | undefined) => (!ok(v) || v === 0 ? "" : v > 0 ? "text-pos" : "text-neg");

@@ -5,7 +5,7 @@ import Plot from "@/components/Plot";
 import { Button } from "@/components/ui/button";
 import { GoalCard } from "@/components/widgets";
 import { fan, histogram } from "@/lib/charts";
-import { money, pct, thisYear, uid, usd } from "@/lib/format";
+import { money, pct, prob, thisYear, uid, usd } from "@/lib/format";
 import { clients, primary } from "@/lib/household";
 import { useHH } from "@/lib/household-context";
 import { buildPlan, simulate, withdrawalSuccess } from "@/lib/montecarlo";
@@ -86,15 +86,15 @@ export default function Planning() {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <Panel title="Goal-based plan" sub={changed ? "Showing the life-event scenario; deltas are against the base plan" : `Each goal's probability of being fully funded across ${runs.toLocaleString("en-US")} simulated futures`}
+        <Panel title="Goal-based plan" sub={changed ? "Life-event scenario; changes are against the base plan" : `Monte Carlo confidence · ${runs.toLocaleString("en-US")} simulations`}
           action={<Segmented value={runs} options={[[1000, "1,000"], [5000, "5,000"], [10000, "10,000"]]} onChange={setRuns} />}>
           <div className="grid gap-3 md:grid-cols-2">
             {h.goals.map((g) => <GoalCard key={g.id} goal={g} probability={g.type === "retirement" ? scen.success : scen.probability[g.id]} compare={changed ? (g.type === "retirement" ? base.success : base.probability[g.id]) : undefined} />)}
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
             {([
-              ["Probability of success", pct(scen.success, 0), scen.success >= 0.8 ? "pos" : scen.success >= 0.6 ? "warn" : "neg"],
-              ["Probability of depletion", pct(scen.depletion, 0), scen.depletion > 0.2 ? "neg" : undefined],
+              ["Probability of success", prob(scen.success), scen.success >= 0.8 ? "pos" : scen.success >= 0.6 ? "warn" : "neg"],
+              ["Probability of depletion", prob(scen.depletion), scen.depletion > 0.2 ? "neg" : undefined],
               ["Median ending wealth", money(scen.ending.median)],
               ["Worst case", money(scen.ending.worst)],
               ["5th percentile", money(scen.ending.p5)],

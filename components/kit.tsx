@@ -51,10 +51,10 @@ export function Ring({ value, size = 64, color }: { value: number; size?: number
   const r = size / 2 - 5, c = 2 * Math.PI * r, v = Math.max(0, Math.min(1, value));
   const col = color ?? (v >= 0.8 ? "var(--pos)" : v >= 0.6 ? "var(--warn)" : "var(--neg)");
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${Math.round(v * 100)}%`} className="shrink-0">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${(v * 100).toFixed(1)}%`} className="shrink-0">
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--muted)" strokeWidth="5" />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={col} strokeWidth="5" strokeLinecap="round" strokeDasharray={`${v * c} ${c}`} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="var(--foreground)" fontSize={size * 0.24} fontWeight={600} className="num">{Math.round(v * 100)}%</text>
+      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="var(--foreground)" fontSize={size * 0.22} fontWeight={600} className="num">{v >= 0.9995 ? ">99.9" : (v * 100).toFixed(1)}%</text>
     </svg>
   );
 }

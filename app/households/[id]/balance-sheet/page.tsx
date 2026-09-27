@@ -4,7 +4,7 @@ import { KV, Panel, Pill, Stat } from "@/components/kit";
 import Plot from "@/components/Plot";
 import { donut, SERIES } from "@/lib/charts";
 import { CLASS_COLOR, CLASS_LABEL, CLASSES } from "@/lib/cma";
-import { date, money, pct, sum, usd } from "@/lib/format";
+import { date, daysUntil, money, pct, sum, usd } from "@/lib/format";
 import { ENTITY_LABEL, inEstate, KIND_LABEL } from "@/lib/household";
 import { useHH } from "@/lib/household-context";
 import type { OtherAssetKind } from "@/lib/types";
@@ -46,7 +46,7 @@ export default function BalanceSheet() {
         <Panel title="Investment accounts" sub={`${h.accounts.length} accounts at ${new Set(h.accounts.map((a) => a.custodian)).size} custodians`} pad={false}>
           <div className="overflow-x-auto">
             <table className="grid-table">
-              <thead><tr><th>Account</th><th>Owner</th><th>Custodian</th><th>Tax treatment</th><th>Policy</th><th className="r">Value</th><th className="r">Share</th></tr></thead>
+              <thead><tr><th>Account</th><th>Owner</th><th>Custodian</th><th>Tax treatment</th><th>Policy</th><th>Statement</th><th className="r">Value</th><th className="r">Share</th></tr></thead>
               <tbody>
                 {[...v.accounts].sort((a, b) => b.value - a.value).map((a) => (
                   <tr key={a.id}>
@@ -55,12 +55,13 @@ export default function BalanceSheet() {
                     <td className="text-muted-foreground">{a.custodian}</td>
                     <td><Pill kind={a.tax === "taxable" ? "neutral" : "Moderate"}>{a.tax.replace("-", " ")}</Pill></td>
                     <td>{a.inPolicy ? <Pill kind="gold">IPS</Pill> : <span className="text-[12px] text-muted-foreground">Separate</span>}</td>
+                    <td className={`text-[12px] whitespace-nowrap ${a.asOf && -daysUntil(a.asOf) > 45 ? "text-warn" : "text-muted-foreground"}`} title="Holdings as of this date; priced at the latest close">{a.asOf ? date(a.asOf) : "—"}</td>
                     <td className="r">{usd(a.value)}</td>
                     <td className="r text-muted-foreground">{pct(a.value / v.liquid)}</td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot><tr><td colSpan={5} className="px-3 py-2.5 font-medium">Total liquid assets</td><td className="r px-3 font-semibold">{usd(v.liquid)}</td><td /></tr></tfoot>
+              <tfoot><tr><td colSpan={6} className="px-3 py-2.5 font-medium">Total liquid assets</td><td className="r px-3 font-semibold">{usd(v.liquid)}</td><td /></tr></tfoot>
             </table>
           </div>
         </Panel>

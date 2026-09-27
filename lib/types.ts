@@ -30,6 +30,7 @@ export type Account = {
   /** Accounts managed under the household investment policy (excludes 529s, donor-advised funds and foundations). */
   inPolicy: boolean;
   holdings: Holding[];
+  asOf?: string; // date of the last statement or position update
 };
 
 export type OtherAssetKind = "residence" | "real-estate" | "private-equity" | "venture" | "business" | "art" | "aircraft" | "other";
@@ -108,11 +109,14 @@ export type IPS = {
   spending: string;
   advisoryFee: number;
   approvedBy: string;
+  changes?: { date: string; summary: string }[];
 };
 
 export type NoteCategory = "Meeting" | "Call" | "Email" | "Recommendation" | "Follow-up" | "Review";
 export type Note = { id: string; date: string; category: NoteCategory; summary: string; author: string };
 export type Task = { id: string; title: string; due: string; done: boolean; priority: "High" | "Normal" };
+export type DocStatus = "Awaiting signature" | "Signed" | "Review due";
+export type Doc = { id: string; name: string; status: DocStatus; date: string };
 
 export type Household = {
   id: string;
@@ -139,6 +143,8 @@ export type Household = {
   preferences: string[];
   notes: Note[];
   tasks: Task[];
+  documents?: Doc[];
+  beneficiaryReview?: string; // when beneficiary designations were last confirmed
   nextMeeting?: string;
   lastReview?: { date: string; probability: number; netWorth: number };
 };

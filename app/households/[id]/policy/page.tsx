@@ -1,13 +1,14 @@
 "use client";
 import { CheckCircle2, CircleAlert, Eye, Pencil, Printer } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Panel, Pill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { CLASS_LABEL, CLASSES, portfolioStats } from "@/lib/cma";
-import { date, money, pct, sum, thisYear, today } from "@/lib/format";
+import { date, money, pct, prob, sum, thisYear, today } from "@/lib/format";
 import { targetWeights } from "@/lib/household";
 import { useHH } from "@/lib/household-context";
 import { compliance, type Status } from "@/lib/ips";
+import { buildPlan, simulate } from "@/lib/montecarlo";
 import { useStress } from "@/lib/use-stress";
 import type { AssetClass, IPS } from "@/lib/types";
 
@@ -16,6 +17,20 @@ const BENCH: Record<AssetClass, string> = {
 };
 const ICON: Record<Status, typeof CheckCircle2> = { Compliant: CheckCircle2, Watch: Eye, Breach: CircleAlert };
 const COLOR: Record<Status, string> = { Compliant: "text-pos", Watch: "text-warn", Breach: "text-neg" };
+
+/** One-line summary of what changed, for the policy's change log. */
+function describeChanges(before: IPS, after: IPS) {
+  const parts: string[] = [];
+  for (const t of after.targets) {
+    const b = before.targets.find((x) => x.cls === t.cls);
+    if (b && Math.abs(b.target - t.target) > 1e-6) parts.push(`${CLASS_LABEL[t.cls]} target ${pct(b.target, 0)} → ${pct(t.target, 0)}`);
+  }
+  (Object.keys(after.limits) as (keyof IPS["limits"])[]).forEach((k) => { if (before.limits[k] !== after.limits[k]) parts.push(`${k.replace(/([A-Z])/g, " $1").toLowerCase()} ${pct(before.limits[k], 0)} → ${pct(after.limits[k], 0)}`); });
+  if (before.liquidityMonths !== after.liquidityMonths) parts.push(`cash reserve ${before.liquidityMonths} → ${after.liquidityMonths} months`);
+  if (before.returnTarget !== after.returnTarget) parts.push(`return target ${pct(before.returnTarget)} → ${pct(after.returnTarget)}`);
+  if (before.objective !== after.objective || before.taxNotes !== after.taxNotes || before.unique !== after.unique) parts.push("wording updated");
+  return parts.length ? `Amended: ${parts.join("; ")}` : "Reviewed with no changes";
+}
 
 function Article({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
@@ -27,7 +42,7 @@ function Article({ n, title, children }: { n: string; title: string; children: R
 }
 
 export default function Policy() {
-  const { h, v, plan, update } = useHH();
+  const { h, v, plan, mc, update } = useHH();
   const [edit, setEdit] = useState(false);
   const [draft, setDraft] = useState<IPS>(h.ips);
   const ips = edit ? draft : h.ips;
@@ -36,6 +51,8 @@ export default function Policy() {
   const counts = { Compliant: 0, Watch: 0, Breach: 0 };
   checks.forEach((c) => counts[c.status]++);
   const policyStats = portfolioStats(targetWeights({ ...h, ips }));
+  // Downstream effect of a draft policy on the plan, recalculated as targets change.
+  const draftConfidence = useMemo(() => (edit ? simulate(buildPlan({ ...h, ips: draft }, v), 2000).success : null), [edit, draft, h, v]);
   const policyAccounts = h.accounts.filter((a) => a.inPolicy), excluded = h.accounts.filter((a) => !a.inPolicy);
   const next5 = plan.flows.filter((f) => f.amount < 0 && f.year < thisYear() + 5);
   const totalTarget = sum(ips.targets.map((t) => t.target));
@@ -51,7 +68,7 @@ export default function Policy() {
         action={edit ? (
           <>
             <Button variant="ghost" size="sm" onClick={() => { setEdit(false); setDraft(h.ips); }}>Cancel</Button>
-            <Button size="sm" disabled={Math.abs(totalTarget - 1) > 0.001} onClick={() => { update((x) => ({ ...x, ips: { ...draft, lastReview: today() } })); setEdit(false); }}>Save and mark reviewed</Button>
+            <Button size="sm" disabled={Math.abs(totalTarget - 1) > 0.001} onClick={() => { update((x) => ({ ...x, ips: { ...draft, lastReview: today(), changes: [{ date: today(), summary: describeChanges(x.ips, draft) }, ...(x.ips.changes ?? [])] } })); setEdit(false); }}>Save and mark reviewed</Button>
           </>
         ) : (
           <>
@@ -164,7 +181,17 @@ export default function Policy() {
             <div><div className="eyebrow">Expected return</div><div className="num mt-1 text-[18px] font-semibold">{pct(policyStats.mean - ips.advisoryFee)}</div></div>
             <div><div className="eyebrow">Volatility</div><div className="num mt-1 text-[18px] font-semibold">{pct(policyStats.vol)}</div></div>
           </div>
-          <div className="mt-3"><Pill kind="gold">{ips.profile}</Pill></div>
+          <div className="mt-3 flex items-center justify-between text-[12.5px]">
+            <Pill kind="gold">{ips.profile}</Pill>
+            <span className="text-muted-foreground">Plan confidence {edit && draftConfidence != null ? <><span className="line-through">{prob(mc.success)}</span> → <b className="text-foreground">{prob(draftConfidence)}</b></> : prob(mc.success)}</span>
+          </div>
+          {edit && <p className="mt-2 text-[11.5px] text-muted-foreground">Recalculated from 2,000 simulations at the draft targets.</p>}
+        </Panel>
+        <Panel title="Change log" sub="Amendments to this policy">
+          <ol className="space-y-2.5 text-[12.5px]">
+            {(h.ips.changes ?? []).map((c, i) => <li key={i}><div className="text-[11.5px] text-muted-foreground">{date(c.date)}</div>{c.summary}</li>)}
+            {!(h.ips.changes ?? []).length && <li className="text-muted-foreground">No amendments recorded.</li>}
+          </ol>
         </Panel>
       </div>
     </div>

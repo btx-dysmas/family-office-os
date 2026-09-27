@@ -42,7 +42,7 @@ Each decision records the situation, what I chose, what I considered instead and
 
 **Context.** A single "probability of success" hides the trade-offs families actually face.
 
-**Decision.** Every goal gets its own probability. Within a year, cash flows are paid in priority order (needs, then wants, then wishes), so a shortfall hits the wishes first.
+**Decision.** Every goal gets its own probability. Within a year, cash flows are paid in priority order (essential, then discretionary, then aspirational), so a shortfall hits aspirational goals first.
 
 **Consequences.** Output reads the way advisors talk ("retirement 92%, vacation home 78%"), and life events show which goals they threaten.
 

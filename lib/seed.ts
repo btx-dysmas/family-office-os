@@ -36,7 +36,9 @@ const ips = (profile: RiskProfile, o: Partial<IPS> & Pick<IPS, "objective" | "ti
   ...o,
 });
 
-export const SEED: Household[] = [
+const STATEMENT_LAG: Record<string, string> = { "a-dyn": "2026-08-31", "a-fdn": "2026-08-31", "a-daf": "2026-08-31", "a-cbp": "2026-06-30", "a-529": "2026-08-31" };
+
+const BOOK: Household[] = [
   {
     id: "whitmore",
     name: "Whitmore Family",
@@ -56,7 +58,7 @@ export const SEED: Household[] = [
     ],
     expenses: 720_000,
     savings: 400_000,
-    retirementSpending: 850_000,
+    retirementSpending: 835_000,
     otherIncome: 380_000,
     entities: [
       { id: "e-joint", name: "Richard & Eleanor Whitmore (joint)", type: "joint" },
@@ -102,10 +104,10 @@ export const SEED: Household[] = [
       { id: "l-sbl", name: "Securities-based line of credit", kind: "credit-line", entity: "e-rlt", balance: 600_000, rate: 0.064, payment: 3_200 },
     ],
     goals: [
-      { id: "g-ret", type: "retirement", name: "Retirement lifestyle", year: 2028, amount: 850_000, priority: 1, person: "p-rw" },
-      { id: "g-ed1", type: "education", name: "Olivia's college", year: 2038, amount: 62_000, years: 4, priority: 2 },
-      { id: "g-ed2", type: "education", name: "Henry's college", year: 2041, amount: 62_000, years: 4, priority: 2 },
-      { id: "g-reno", type: "purchase", name: "Nantucket renovation", year: 2028, amount: 1_500_000, priority: 3 },
+      { id: "g-ret", type: "retirement", name: "Retirement lifestyle", year: 2028, amount: 835_000, priority: 1, person: "p-rw" },
+      { id: "g-ed1", type: "education", name: "Olivia's college", year: 2038, amount: 63_850, years: 4, priority: 2 },
+      { id: "g-ed2", type: "education", name: "Henry's college", year: 2041, amount: 63_850, years: 4, priority: 2 },
+      { id: "g-reno", type: "purchase", name: "Nantucket renovation", year: 2028, amount: 1_385_000, priority: 3 },
       { id: "g-leg", type: "legacy", name: "Legacy to children and grandchildren", year: 2060, amount: 40_000_000, priority: 2 },
     ],
     events: [],
@@ -118,6 +120,7 @@ export const SEED: Household[] = [
       limits: { maxVolatility: 0.11, maxDrawdown: 0.25, maxPosition: 0.1, maxIlliquid: 0.5 },
       returnTarget: 0.05,
       approvedBy: "Richard Whitmore, Eleanor Whitmore",
+      changes: [{ date: "2026-03-12", summary: "Annual review: alternatives target raised from 5% to 7%, cash reserve set to 24 months" }, { date: "2025-03-01", summary: "Policy restated after the sale of Richard's operating company" }],
     }, { us: 0.35, intl: 0.15, bonds: 0.3, realestate: 0.05, alts: 0.07, cash: 0.08 }),
     riskAnswers: { experience: 3, knowledge: 2, horizon: 2, drawdown: 1, reaction: 2, goal: 1, income: 2, liquidity: 3 },
     preferences: ["Quarterly in-person reviews in Greenwich", "Philanthropy: early-childhood education and ocean conservation", "Excludes tobacco and firearms", "Prefers written summaries before meetings", "Coordinate with estate attorney (Morgan & Pell LLP) and CPA"],
@@ -132,6 +135,12 @@ export const SEED: Household[] = [
       { id: "t2", title: "Confirm $1.2M private equity capital call schedule with fund administrator", due: "2026-10-15", done: false, priority: "Normal" },
       { id: "t3", title: "Prepare foundation 5% distribution estimate for 2026", due: "2026-11-01", done: false, priority: "Normal" },
     ],
+    documents: [
+      { id: "d1", name: "IPS amendment: 2027 retirement date scenario", status: "Awaiting signature", date: "2026-09-12" },
+      { id: "d2", name: "Updated IRA beneficiary designations", status: "Signed", date: "2026-05-09" },
+      { id: "d3", name: "Revocable trust restatement (Morgan & Pell)", status: "Review due", date: "2021-04-30" },
+    ],
+    beneficiaryReview: "2026-05-09",
     nextMeeting: "2026-10-09",
     lastReview: { date: "2026-06-19", probability: 0.9, netWorth: 58_000_000 },
   },
@@ -152,7 +161,7 @@ export const SEED: Household[] = [
     ],
     expenses: 260_000,
     savings: 180_000,
-    retirementSpending: 240_000,
+    retirementSpending: 236_500,
     otherIncome: 0,
     entities: [
       { id: "e-joint", name: "Michael Chen & Sofia Alvarez (community property)", type: "joint" },
@@ -174,10 +183,10 @@ export const SEED: Household[] = [
     other: [{ id: "o-home", name: "Primary residence, Menlo Park", kind: "residence", entity: "e-rlt", value: 2_900_000, asOf: "2026-05-31" }],
     liabilities: [{ id: "l-mort", name: "Home mortgage (30-year fixed)", kind: "mortgage", entity: "e-rlt", balance: 1_600_000, rate: 0.031, payment: 7_900 }],
     goals: [
-      { id: "g-ret", type: "retirement", name: "Retire at 55", year: 2040, amount: 240_000, priority: 1, person: "p-mc" },
-      { id: "g-ed1", type: "education", name: "Mateo's college (private)", year: 2035, amount: 85_000, years: 4, priority: 1 },
-      { id: "g-ed2", type: "education", name: "Lucia's college (private)", year: 2038, amount: 85_000, years: 4, priority: 1 },
-      { id: "g-tahoe", type: "purchase", name: "Lake Tahoe vacation home", year: 2031, amount: 1_200_000, priority: 2 },
+      { id: "g-ret", type: "retirement", name: "Retire at 55", year: 2040, amount: 236_500, priority: 1, person: "p-mc" },
+      { id: "g-ed1", type: "education", name: "Mateo's college (private)", year: 2035, amount: 84_200, years: 4, priority: 1 },
+      { id: "g-ed2", type: "education", name: "Lucia's college (private)", year: 2038, amount: 84_200, years: 4, priority: 1 },
+      { id: "g-tahoe", type: "purchase", name: "Lake Tahoe vacation home", year: 2031, amount: 1_150_000, priority: 2 },
     ],
     events: [],
     ips: ips("Aggressive", {
@@ -186,6 +195,7 @@ export const SEED: Household[] = [
       taxNotes: "Top federal and California brackets. Diversify NVDA gradually using tax-lot selection, charitable gifts of appreciated shares and loss harvesting. Maximize 401(k) and backdoor Roth contributions.",
       unique: "Ongoing RSU vesting adds roughly $300,000 of company stock a year. Sofia prefers ESG-screened funds where available.",
       approvedBy: "Michael Chen, Sofia Alvarez",
+      changes: [{ date: "2026-07-22", summary: "Added a 10% single-security limit and a quarterly NVDA diversification schedule" }, { date: "2025-03-01", summary: "Profile moved from Moderate to Aggressive after the risk questionnaire" }],
     }, { us: 0.6, intl: 0.2, bonds: 0.12, realestate: 0.04, alts: 0, cash: 0.04 }),
     riskAnswers: { experience: 2, knowledge: 2, horizon: 3, drawdown: 3, reaction: 2, goal: 3, income: 3, liquidity: 2 },
     preferences: ["Evening video calls after the kids are asleep", "Wants a written plan for reducing NVDA below 10%", "Interested in ESG screens", "Dislikes long reports: one-page summaries"],
@@ -198,6 +208,11 @@ export const SEED: Household[] = [
       { id: "t1", title: "Execute Q4 NVDA diversification tranche", due: "2026-10-20", done: false, priority: "High" },
       { id: "t2", title: "Send backdoor Roth instructions for 2026", due: "2026-12-01", done: false, priority: "Normal" },
     ],
+    documents: [
+      { id: "d1", name: "10b5-1 trading plan for NVDA sales", status: "Awaiting signature", date: "2026-09-18" },
+      { id: "d2", name: "Investment policy statement (10% single-stock limit)", status: "Signed", date: "2026-07-24" },
+    ],
+    beneficiaryReview: "2022-03-01",
     nextMeeting: "2026-10-22",
     lastReview: { date: "2026-07-22", probability: 0.81, netWorth: 5_000_000 },
   },
@@ -216,7 +231,7 @@ export const SEED: Household[] = [
     ],
     expenses: 310_000,
     savings: 260_000,
-    retirementSpending: 280_000,
+    retirementSpending: 274_000,
     otherIncome: 0,
     entities: [
       { id: "e-pr", name: "Priya Raman", type: "individual" },
@@ -236,7 +251,7 @@ export const SEED: Household[] = [
     ],
     liabilities: [{ id: "l-mort", name: "Home mortgage", kind: "mortgage", entity: "e-rlt", balance: 450_000, rate: 0.034, payment: 3_900 }],
     goals: [
-      { id: "g-ret", type: "retirement", name: "Retire from surgery at 62", year: 2036, amount: 280_000, priority: 1, person: "p-pr" },
+      { id: "g-ret", type: "retirement", name: "Retire from surgery at 62", year: 2036, amount: 274_000, priority: 1, person: "p-pr" },
       { id: "g-leg", type: "legacy", name: "Bequests to Anika and Houston Methodist", year: 2069, amount: 3_000_000, priority: 3 },
     ],
     events: [],
@@ -245,6 +260,7 @@ export const SEED: Household[] = [
       timeHorizon: "10 years to retirement; 33-year planning horizon.",
       taxNotes: "Top federal bracket, no state income tax. Maximize the cash balance plan and 401(k) profit sharing. Municipal bonds in taxable accounts.",
       unique: "Practice interest is illiquid until a buy-out at retirement. Occupational disability insurance in force until 65.",
+      changes: [{ date: "2026-08-29", summary: "Annual review: no changes to targets; cash balance plan contribution increased" }],
     }),
     riskAnswers: { experience: 2, knowledge: 2, horizon: 2, drawdown: 1, reaction: 2, goal: 2, income: 3, liquidity: 2 },
     preferences: ["Meets between surgery blocks: Friday afternoons", "Prefers phone to email", "Wants to fund Anika's graduate school"],
@@ -253,6 +269,11 @@ export const SEED: Household[] = [
       { id: "n2", date: "2026-04-11", category: "Call", summary: "Discussed a disability insurance rider review with her insurance broker.", author: "Noah Williams" },
     ],
     tasks: [{ id: "t1", title: "Request updated practice valuation from CPA", due: "2026-11-15", done: false, priority: "Normal" }],
+    documents: [
+      { id: "d1", name: "Cash balance plan contribution election, 2026", status: "Signed", date: "2026-08-30" },
+      { id: "d2", name: "Practice buy-sell agreement", status: "Review due", date: "2020-11-12" },
+    ],
+    beneficiaryReview: "2019-06-20",
     nextMeeting: "2026-12-04",
     lastReview: { date: "2026-08-29", probability: 0.86, netWorth: 7_700_000 },
   },
@@ -272,7 +293,7 @@ export const SEED: Household[] = [
     ],
     expenses: 150_000,
     savings: 38_000,
-    retirementSpending: 110_000,
+    retirementSpending: 108_400,
     otherIncome: 0,
     entities: [
       { id: "e-joint", name: "Daniel & Amara Okafor (joint)", type: "joint" },
@@ -295,9 +316,9 @@ export const SEED: Household[] = [
       { id: "l-auto", name: "Auto loan", kind: "auto", entity: "e-joint", balance: 22_000, rate: 0.069, payment: 480 },
     ],
     goals: [
-      { id: "g-home", type: "home", name: "Buy a home in Decatur", year: 2028, amount: 95_000, priority: 1 },
-      { id: "g-ret", type: "retirement", name: "Retire at 62", year: 2054, amount: 110_000, priority: 1, person: "p-do" },
-      { id: "g-ed1", type: "education", name: "Ethan's college (public in-state)", year: 2042, amount: 29_000, years: 4, priority: 2 },
+      { id: "g-home", type: "home", name: "Down payment, Decatur home", year: 2028, amount: 96_500, priority: 1 },
+      { id: "g-ret", type: "retirement", name: "Retire at 62", year: 2054, amount: 108_400, priority: 1, person: "p-do" },
+      { id: "g-ed1", type: "education", name: "Ethan's college (public in-state)", year: 2042, amount: 28_950, years: 4, priority: 2 },
     ],
     events: [{ id: "ev1", type: "new-child", year: 2027, amount: 18_000, duration: 18 }],
     ips: ips("Aggressive", {
@@ -307,6 +328,7 @@ export const SEED: Household[] = [
       unique: "Down payment savings are held in cash outside the growth allocation. A second child is planned for 2027.",
       liquidityMonths: 4,
       approvedBy: "Daniel Okafor, Amara Okafor",
+      changes: [{ date: "2026-09-02", summary: "Down-payment savings moved outside the policy portfolio" }],
     }, { us: 0.55, intl: 0.25, bonds: 0.15, realestate: 0.05, alts: 0, cash: 0 }),
     riskAnswers: { experience: 1, knowledge: 2, horizon: 3, drawdown: 3, reaction: 3, goal: 3, income: 2, liquidity: 2 },
     preferences: ["Saturday morning video calls", "Wants to understand the plan step by step", "Pay off student loans before prepaying the mortgage"],
@@ -315,7 +337,15 @@ export const SEED: Household[] = [
       { id: "n2", date: "2026-09-02", category: "Recommendation", summary: "Direct raises to the down payment fund until it reaches $95,000, then restart taxable investing.", author: "Noah Williams" },
     ],
     tasks: [{ id: "t1", title: "Compare mortgage pre-approval offers", due: "2027-02-01", done: false, priority: "Normal" }],
+    documents: [
+      { id: "d1", name: "Advisory agreement and IPS", status: "Signed", date: "2024-01-20" },
+      { id: "d2", name: "Wills and guardianship for Ethan (estate attorney referral)", status: "Awaiting signature", date: "2026-09-02" },
+    ],
+    beneficiaryReview: "2024-06-01",
     nextMeeting: "2026-12-12",
     lastReview: { date: "2026-03-07", probability: 0.74, netWorth: 400_000 },
   },
 ];
+
+/** Every account gets a statement date: yesterday's close for brokerage feeds, month or quarter end for trusts and plans. */
+export const SEED: Household[] = BOOK.map((h) => ({ ...h, accounts: h.accounts.map((a) => ({ ...a, asOf: a.asOf ?? STATEMENT_LAG[a.id] ?? "2026-09-25" })) }));

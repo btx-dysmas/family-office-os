@@ -11,7 +11,7 @@ import type { Goal } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const GOAL_ICON = { retirement: Palmtree, education: GraduationCap, home: Home, legacy: Landmark, purchase: ShoppingBag };
-const PRIORITY = { 1: "Need", 2: "Want", 3: "Wish" };
+const PRIORITY = { 1: "Essential", 2: "Discretionary", 3: "Aspirational" };
 
 export function GoalCard({ goal, probability, compare }: { goal: Goal; probability: number | undefined; compare?: number }) {
   const Icon = GOAL_ICON[goal.type];
@@ -29,7 +29,7 @@ export function GoalCard({ goal, probability, compare }: { goal: Goal; probabili
         </div>
         <div className="mt-1.5 flex items-center gap-2">
           <Pill>{PRIORITY[goal.priority]}</Pill>
-          {compare != null && Math.abs(compare - p) >= 0.005 && <span className={cn("num text-[11.5px]", p - compare >= 0 ? "text-pos" : "text-neg")}>{p - compare >= 0 ? "+" : ""}{pct(p - compare, 0)} vs base</span>}
+          {compare != null && Math.abs(compare - p) >= 0.005 && <span className={cn("num text-[11.5px]", p - compare >= 0 ? "text-pos" : "text-neg")}>{p - compare >= 0 ? "+" : ""}{pct(p - compare, 1)} vs base</span>}
         </div>
       </div>
     </div>
