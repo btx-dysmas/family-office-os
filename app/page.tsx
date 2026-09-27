@@ -162,8 +162,8 @@ export default function Dashboard() {
           {!macro ? <Loading label="Loading FRED data" /> : !reading ? <p className="text-[13px] text-muted-foreground">FRED data unavailable. Add FRED_API_KEY to enable.</p> : (
             <>
               <div className="flex items-center gap-3">
-                <span className="rounded-md px-2.5 py-1 text-[15px] font-semibold text-background" style={{ background: REGIME_COLOR[reading.regime] }}>{reading.regime}</span>
-                <span className="text-[12.5px] text-muted-foreground">{reading.reasons[0]}</span>
+                <span className="flex items-center gap-2 text-[15px] font-medium"><span className="size-2 rounded-full" style={{ background: REGIME_COLOR[reading.regime] }} />{reading.regime}</span>
+                <span className="truncate text-[12.5px] text-muted-foreground" title={reading.reasons.join("; ")}>{reading.reasons[0]}</span>
               </div>
               <table className="mt-3 w-full text-[12.5px]">
                 <thead><tr className="text-[10.5px] tracking-wider text-muted-foreground uppercase"><th className="pb-1 text-left font-medium">Indicator</th><th className="pb-1 text-right font-medium">Latest</th><th className="pb-1 text-right font-medium">1-yr chg</th><th className="pb-1 text-right font-medium">As of</th></tr></thead>

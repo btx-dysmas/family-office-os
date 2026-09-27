@@ -40,7 +40,7 @@ export default function Committee() {
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div>
                 <div className="eyebrow">Investment committee report · {date(today())}</div>
-                <div className="mt-3 flex items-center gap-3"><span className="text-[13px] text-muted-foreground">Economic regime</span><span className="rounded-md px-3 py-1 font-serif text-[22px] text-background" style={{ background: REGIME_COLOR[ic.regime] }}>{ic.regime}</span></div>
+                <div className="mt-3 flex items-center gap-3"><span className="text-[13px] text-muted-foreground">Economic regime</span><span className="flex items-center gap-2 font-serif text-[22px]"><span className="size-2.5 rounded-full" style={{ background: REGIME_COLOR[ic.regime] }} />{ic.regime}</span></div>
                 <p className="mt-3 max-w-2xl text-[13.5px] text-muted-foreground">{IMPLICATIONS[ic.regime].summary}</p>
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[12.5px]">

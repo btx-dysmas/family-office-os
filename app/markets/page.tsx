@@ -1,11 +1,19 @@
 "use client";
 import { useMemo } from "react";
-import { KV, Loading, Note, PageHeader, Panel, Stat } from "@/components/kit";
+import { KV, Loading, Note, PageHeader, Panel } from "@/components/kit";
 import Plot from "@/components/Plot";
 import { C, macroLines, yieldCurve } from "@/lib/charts";
 import { useMacro } from "@/lib/data";
-import { date, today } from "@/lib/format";
+import { today } from "@/lib/format";
 import { classify, history, IMPLICATIONS, REGIME_COLOR, type Regime } from "@/lib/regime";
+
+/** 12-month sparkline for an indicator row. */
+function Trend({ values }: { values: number[] }) {
+  if (values.length < 4) return null;
+  const w = 90, h = 20, lo = Math.min(...values), hi = Math.max(...values);
+  const pts = values.map((v, i) => `${((i / (values.length - 1)) * w).toFixed(1)},${(h - 2 - ((v - lo) / (hi - lo || 1)) * (h - 4)).toFixed(1)}`).join(" ");
+  return <svg width={w} height={h} aria-hidden="true"><polyline fill="none" stroke="var(--c1)" strokeWidth={1.3} points={pts} /></svg>;
+}
 
 export default function Markets() {
   const { data: m, error } = useMacro();
@@ -13,10 +21,18 @@ export default function Markets() {
   const now = useMemo(() => (m?.available ? classify(s, today()) : null), [m, s]);
   const past = useMemo(() => (m?.available ? history(s) : []), [m, s]);
   const imp = now ? IMPLICATIONS[now.regime] : null;
-  const kpi = (id: string, label: string) => {
-    const x = s[id];
-    return <Stat key={id} label={label} value={x?.latest ? `${x.latest[1].toFixed(2)}%` : "—"} sub={x?.latest ? `${x.chg1y != null ? `${x.chg1y >= 0 ? "+" : ""}${x.chg1y.toFixed(2)} pts vs 1 yr · ` : ""}${date(x.latest[0])}` : undefined} />;
-  };
+  // How long the current classification has held, from the quarterly history.
+  const since = useMemo(() => {
+    if (!past.length) return null;
+    const cur = past[past.length - 1].regime;
+    let k = past.length - 1;
+    while (k > 0 && past[k - 1].regime === cur) k--;
+    return new Date(past[k].date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  }, [past]);
+  const INDICATORS: [string, string, string][] = [
+    ["CPIAUCSL", "CPI inflation", "y/y"], ["A191RL1Q225SBEA", "Real GDP growth", "annualized"], ["UNRATE", "Unemployment", ""],
+    ["DFF", "Fed funds", "effective"], ["DGS10", "10-year Treasury", ""], ["MORTGAGE30US", "30-year mortgage", "Freddie Mac"],
+  ];
   const fredError = Object.values(s).find((x) => x.error)?.error;
 
   return (
@@ -26,29 +42,34 @@ export default function Markets() {
       {(error || (m && !m.available)) && <Panel title="Economic data unavailable"><p className="text-[13px] text-muted-foreground">{m && !m.keyConfigured ? "Set FRED_API_KEY in .env.local or the Vercel project settings. Keys are free at fred.stlouisfed.org." : error ?? fredError ?? "FRED did not respond. Try again shortly."}</p></Panel>}
       {now && imp && (
         <>
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Panel title="Current regime" sub="Rules-based classification, updated as each series is published">
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="rounded-lg px-4 py-2 font-serif text-[30px] leading-none text-background" style={{ background: REGIME_COLOR[now.regime] }}>{now.regime}</span>
-                <p className="max-w-md text-[13.5px] text-muted-foreground">{imp.summary}</p>
+          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <Panel title="Current regime" sub="Rules-based, updated as each FRED series is published">
+              <div className="flex items-baseline gap-3">
+                <span className="size-2.5 translate-y-[-2px] rounded-full" style={{ background: REGIME_COLOR[now.regime] }} />
+                <span className="font-serif text-[24px] leading-none">{now.regime}</span>
+                {since && <span className="text-[12.5px] text-muted-foreground">since {since}</span>}
               </div>
-              <ul className="mt-4 list-disc space-y-1 pl-5 text-[13px]">{now.reasons.map((r) => <li key={r}>{r.charAt(0).toUpperCase() + r.slice(1)}.</li>)}</ul>
+              <p className="mt-3 max-w-[58ch] text-[13.5px] leading-relaxed text-muted-foreground">{imp.summary}</p>
+              <div className="eyebrow mt-5 mb-1.5">Signals</div>
+              <ul className="space-y-1 text-[13px] leading-relaxed">{now.reasons.map((r) => <li key={r} className="flex gap-2"><span className="text-muted-foreground">–</span>{r.charAt(0).toUpperCase() + r.slice(1)}</li>)}</ul>
               <KV className="mt-4" rows={[
-                ["Real GDP growth (annualized)", now.gdp != null ? `${now.gdp.toFixed(1)}%` : "—"], ["CPI inflation (year over year)", now.cpi != null ? `${now.cpi.toFixed(1)}%` : "—"],
-                ["Unemployment", now.unemp != null ? `${now.unemp.toFixed(1)}%` : "—"], ["Sahm rule reading", now.sahm != null ? `${now.sahm >= 0 ? "+" : ""}${now.sahm.toFixed(2)} pts (0.50 signals recession)` : "—"],
-                ["10-year less 2-year Treasury", now.curve != null ? `${now.curve.toFixed(2)} pts${now.curve < 0 ? " (inverted)" : ""}` : "—"],
+                ["Real GDP growth, annualized", now.gdp != null ? `${now.gdp.toFixed(1)}%` : "—"], ["CPI inflation, y/y", now.cpi != null ? `${now.cpi.toFixed(1)}%` : "—"],
+                ["Unemployment", now.unemp != null ? `${now.unemp.toFixed(1)}%` : "—"], ["Sahm rule reading", now.sahm != null ? <span key="s">{now.sahm >= 0 ? "+" : ""}{now.sahm.toFixed(2)} pts <span className="text-muted-foreground">(recession at 0.50)</span></span> : "—"],
+                ["10-year less 2-year", now.curve != null ? `${now.curve.toFixed(2)} pts${now.curve < 0 ? " (inverted)" : ""}` : "—"],
               ]} />
             </Panel>
-            <Panel title="What it means for portfolios" sub={`Typical positioning in ${now.regime.toLowerCase()}`}>
-              <table className="grid-table">
-                <tbody>
-                  {([["Equities", imp.equities], ["Bonds", imp.bonds], ["Real assets", imp.real], ["Cash", imp.cash]] as const).map(([k, v]) => <tr key={k}><td className="w-28 font-medium">{k}</td><td className="text-muted-foreground">{v}</td></tr>)}
-                </tbody>
-              </table>
-              <div className="mt-5 eyebrow">All regimes</div>
-              <ul className="mt-2 space-y-2 text-[12.5px]">
-                {(Object.keys(IMPLICATIONS) as Regime[]).map((r) => <li key={r} className="flex gap-2.5"><span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ background: REGIME_COLOR[r] }} /><span><b className="font-medium">{r}.</b> <span className="text-muted-foreground">{IMPLICATIONS[r].summary}</span></span></li>)}
-              </ul>
+            <Panel title="Portfolio implications" sub={`Typical positioning in ${now.regime.toLowerCase()}`}>
+              <dl className="divide-y divide-border/70 text-[13px]">
+                {([["Equities", imp.equities], ["Bonds", imp.bonds], ["Real assets", imp.real], ["Cash", imp.cash]] as const).map(([k, v]) => (
+                  <div key={k} className="grid grid-cols-[96px_1fr] gap-3 py-2.5"><dt className="font-medium">{k}</dt><dd className="leading-relaxed text-muted-foreground">{v}</dd></div>
+                ))}
+              </dl>
+              <details className="group mt-4 text-[12.5px]">
+                <summary className="cursor-pointer text-gold select-none hover:underline">How each regime is defined</summary>
+                <ul className="mt-3 space-y-2.5">
+                  {(Object.keys(IMPLICATIONS) as Regime[]).map((r) => <li key={r} className="grid grid-cols-[14px_1fr] gap-1.5 leading-relaxed"><span className="mt-1.5 size-2 rounded-full" style={{ background: REGIME_COLOR[r] }} /><span><span className="font-medium">{r}.</span> <span className="text-muted-foreground">{IMPLICATIONS[r].summary}</span></span></li>)}
+                </ul>
+              </details>
             </Panel>
           </div>
 
@@ -63,13 +84,30 @@ export default function Markets() {
       )}
       {m?.available && (
         <>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
-            {kpi("CPIAUCSL", "CPI inflation")}{kpi("A191RL1Q225SBEA", "Real GDP growth")}{kpi("UNRATE", "Unemployment")}
-            {kpi("DFF", "Fed funds")}{kpi("DGS10", "10-year Treasury")}{kpi("MORTGAGE30US", "30-year mortgage")}
+          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <Panel title="Indicators" sub="Latest FRED readings" pad={false}>
+              <table className="grid-table">
+                <thead><tr><th>Series</th><th className="r">Latest</th><th className="r">1-yr chg</th><th>12 months</th><th className="r">As of</th></tr></thead>
+                <tbody>
+                  {INDICATORS.map(([id, label, note]) => {
+                    const x = s[id], from = x?.latest ? `${Number(x.latest[0].slice(0, 4)) - 1}${x.latest[0].slice(4)}` : "", pts = (x?.obs ?? []).filter((o) => o[0] >= from).map((o) => o[1]);
+                    return (
+                      <tr key={id}>
+                        <td>{label}{note && <span className="ml-1.5 text-[11.5px] text-muted-foreground">{note}</span>}</td>
+                        <td className="r font-medium">{x?.latest ? `${x.latest[1].toFixed(2)}%` : "—"}</td>
+                        <td className="r text-muted-foreground">{x?.chg1y != null ? `${x.chg1y >= 0 ? "+" : ""}${x.chg1y.toFixed(2)}` : "—"}</td>
+                        <td><Trend values={pts} /></td>
+                        <td className="r text-[12px] whitespace-nowrap text-muted-foreground">{x?.latest ? new Date(x.latest[0] + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </Panel>
+            <Panel title="Treasury yield curve" sub="Daily par yields, U.S. Department of the Treasury">{m.curve && <Plot fig={yieldCurve(m.curve)} height={270} />}</Panel>
           </div>
-          <div className="mt-4 grid gap-4 xl:grid-cols-2">
-            <Panel title="Treasury yield curve" sub="Daily par yields, U.S. Department of the Treasury">{m.curve && <Plot fig={yieldCurve(m.curve)} height={290} />}</Panel>
-            <Panel title="Policy and market rates"><Plot fig={macroLines(s, [["DFF", "Fed funds", C.c3], ["DGS2", "2-year", C.c2], ["DGS10", "10-year", C.c1], ["MORTGAGE30US", "30-year mortgage", C.c5]])} height={290} /></Panel>
+          <div className="mt-4">
+            <Panel title="Policy and market rates"><Plot fig={macroLines(s, [["DFF", "Fed funds", C.c3], ["DGS2", "2-year", C.c2], ["DGS10", "10-year", C.c1], ["MORTGAGE30US", "30-year mortgage", C.c5]])} height={260} /></Panel>
           </div>
           <div className="mt-4 grid gap-4 xl:grid-cols-3">
             <Panel title="Growth and inflation"><Plot fig={macroLines(s, [["A191RL1Q225SBEA", "Real GDP growth", C.c1], ["CPIAUCSL", "CPI inflation", C.c4], ["UNRATE", "Unemployment", C.c2]])} height={260} /></Panel>
