@@ -1,5 +1,5 @@
 "use client";
-import { BookOpen, Building2, Eraser, Gauge, Landmark, LineChart, ListChecks, Moon, RotateCcw, Scale, Search, Star, Sun, Users } from "lucide-react";
+import { BookOpen, Building2, Eraser, Gauge, Landmark, LineChart, ListChecks, Moon, Network, RotateCcw, Scale, Search, Star, Sun, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -13,7 +13,7 @@ const NAV: { group: string; items: [string, string, typeof Gauge][] }[] = [
   { group: "Advisor", items: [["/", "Dashboard", Gauge], ["/households", "Households", Users], ["/relationships", "Relationships", ListChecks]] },
   { group: "Markets", items: [["/markets", "Economic regime", LineChart], ["/committee", "Investment committee", Scale]] },
   { group: "Research", items: [["/research", "Fund analysis", Building2], ["/watchlist", "Watchlist", Star]] },
-  { group: "Reference", items: [["/methodology", "Methodology", BookOpen]] },
+  { group: "Reference", items: [["/methodology", "Methodology", BookOpen], ["/architecture", "Architecture", Network]] },
 ];
 
 function Sidebar() {

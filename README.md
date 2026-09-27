@@ -144,6 +144,10 @@ Next.js route handlers (TypeScript, serverless)
 Reference data (lib/reference.ts): IRS 2026 brackets and limits, SSA 2026 formula, College Board 2025–26 prices
 ```
 
+The app has its own [Architecture page](app/architecture/page.tsx) with this diagram and a walk-through of the data model, the household model, the IPS engine and caching, and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) goes deeper.
+
+![Architecture page](docs/screenshots/architecture.png)
+
 ### Design principles
 
 **Transparency.** Every figure traces back to a public source, a stated assumption or a documented formula.
