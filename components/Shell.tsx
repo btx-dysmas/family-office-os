@@ -1,11 +1,12 @@
 "use client";
-import { BookOpen, Building2, Eraser, Gauge, Landmark, LineChart, ListChecks, RotateCcw, Scale, Search, Star, Users } from "lucide-react";
+import { BookOpen, Building2, Eraser, Gauge, Landmark, LineChart, ListChecks, Moon, RotateCcw, Scale, Search, Star, Sun, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { money } from "@/lib/format";
 import { value } from "@/lib/household";
 import { actions, useBook } from "@/lib/store";
+import { setTheme, useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const NAV: { group: string; items: [string, string, typeof Gauge][] }[] = [
@@ -70,6 +71,17 @@ function Sidebar() {
   );
 }
 
+function ThemeButton() {
+  const theme = useTheme();
+  const next = theme === "dark" ? "light" : "dark";
+  return (
+    <button onClick={() => setTheme(next)} aria-label={`Switch to ${next} mode`} title={`Switch to ${next} mode`}
+      className="grid size-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-raised hover:text-foreground">
+      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </button>
+  );
+}
+
 function Topbar() {
   const router = useRouter();
   const { households } = useBook();
@@ -95,9 +107,12 @@ function Topbar() {
           </ul>
         )}
       </div>
-      <div className="ml-auto hidden items-center gap-2 text-[12px] text-muted-foreground md:flex">
-        <span className="size-1.5 rounded-full bg-pos" />
-        Live data: FRED · Treasury · SEC · Yahoo Finance
+      <div className="ml-auto flex items-center gap-3">
+        <span className="hidden items-center gap-2 text-[12px] text-muted-foreground md:flex">
+          <span className="size-1.5 rounded-full bg-pos" />
+          Live data: FRED · Treasury · SEC · Yahoo Finance
+        </span>
+        <ThemeButton />
       </div>
     </header>
   );

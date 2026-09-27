@@ -68,12 +68,12 @@ export function Timeline({ items, limit = 14 }: { items: Milestone[]; limit?: nu
   );
 }
 
-const HEAT = ["#1d3b33", "#27453a", "#4a4426", "#5a3a22", "#5e2a31"];
+const HEAT = ["var(--heat-1)", "var(--heat-2)", "var(--heat-3)", "var(--heat-4)", "var(--heat-5)"];
 export function HeatGrid({ cells, compact = false }: { cells: HeatCell[]; compact?: boolean }) {
   return (
     <div className={cn("grid gap-2", compact ? "grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-5")}>
       {cells.map((c) => (
-        <div key={c.name} className="rounded-lg p-3 ring-1 ring-inset ring-white/5" style={{ background: HEAT[Math.min(4, Math.round(c.score) - 1)] }}>
+        <div key={c.name} className="rounded-lg p-3 ring-1 ring-inset ring-border/60" style={{ background: HEAT[Math.min(4, Math.round(c.score) - 1)] }}>
           <div className="flex items-center justify-between gap-2">
             <span className="text-[12.5px] font-medium">{c.name}</span>
             <Pill kind={c.level}>{c.level}</Pill>

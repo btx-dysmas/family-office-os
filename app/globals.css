@@ -85,6 +85,51 @@
   --c4: #e0708f;
   --c5: #a58bea;
   --c6: #7e8aa3;
+  /* Risk heat map, low to high */
+  --heat-1: #1d3b33;
+  --heat-2: #27453a;
+  --heat-3: #4a4426;
+  --heat-4: #5a3a22;
+  --heat-5: #5e2a31;
+}
+
+/* Light theme: same structure, paper-white surfaces and deeper accents for contrast on white. */
+:root.light {
+  --background: #f3f4f6;
+  --foreground: #172033;
+  --card: #ffffff;
+  --card-foreground: #172033;
+  --raised: #f1f3f6;
+  --subtle: #f8f9fb;
+  --popover: #ffffff;
+  --popover-foreground: #172033;
+  --primary: #946f25;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0f4;
+  --secondary-foreground: #172033;
+  --muted: #eceff3;
+  --muted-foreground: #5d687c;
+  --accent: #eef0f4;
+  --accent-foreground: #172033;
+  --destructive: #c0392b;
+  --border: #e1e5eb;
+  --input: #d2d8e1;
+  --ring: #946f25;
+  --gold: #946f25;
+  --pos: #1e7f4e;
+  --neg: #c0392b;
+  --warn: #a3650c;
+  --c1: #2f5fbf;
+  --c2: #0e8f89;
+  --c3: #b47410;
+  --c4: #c23f68;
+  --c5: #7457c4;
+  --c6: #66708a;
+  --heat-1: #e3f2ea;
+  --heat-2: #eef3e4;
+  --heat-3: #fbf0d9;
+  --heat-4: #fbe3d3;
+  --heat-5: #f8dcdf;
 }
 
 @layer base {
@@ -94,6 +139,9 @@
   html {
     @apply font-sans;
     color-scheme: dark;
+  }
+  html.light {
+    color-scheme: light;
   }
   body {
     @apply bg-background text-foreground antialiased;
@@ -154,7 +202,7 @@
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #232b3a;
+  background: color-mix(in oklab, var(--muted-foreground) 35%, transparent);
   border-radius: 10px;
   border: 3px solid var(--background);
 }

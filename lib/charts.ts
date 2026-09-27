@@ -144,12 +144,14 @@ export function macroLines(series: Record<string, any>, ids: [string, string, st
   };
 }
 
-/** Same figure for print: white background, dark text, light gridlines. */
-export function lightFig(f: Fig): Fig {
-  const s = JSON.stringify(f).replaceAll(C.ink, "#1a2233").replaceAll(C.ink2, "#4b5568").replaceAll(C.ink3, "#737d91").replaceAll(C.grid, "#e6e9ef").replaceAll(C.line, "#cdd3de").replaceAll("#0e121a", "#ffffff").replaceAll("#151b27", "#ffffff");
+/** Same figure on a light surface. For print the background is solid white; on screen it stays transparent. */
+export function lightFig(f: Fig, print = true): Fig {
+  const s = JSON.stringify(f).replaceAll(C.ink, "#1a2233").replaceAll(C.ink2, "#4b5568").replaceAll(C.ink3, "#5d687c").replaceAll(C.grid, "#e8ebf0").replaceAll(C.line, "#cdd3de").replaceAll("#0e121a", "#ffffff").replaceAll("#151b27", "#ffffff");
   const out = JSON.parse(s);
-  out.layout.paper_bgcolor = "#ffffff";
-  out.layout.plot_bgcolor = "#ffffff";
-  out.layout.font = { ...out.layout.font, family: "Helvetica, Arial, sans-serif" };
+  if (print) {
+    out.layout.paper_bgcolor = "#ffffff";
+    out.layout.plot_bgcolor = "#ffffff";
+    out.layout.font = { ...out.layout.font, family: "Helvetica, Arial, sans-serif" };
+  }
   return out;
 }
