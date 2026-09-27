@@ -104,6 +104,10 @@ Every household here has a real IPS (objectives, risk tolerance, time horizon, l
 | ![Fund analysis](docs/screenshots/research.png) | ![Economic regime](docs/screenshots/markets.png) |
 | **Fund analysis:** complete holdings from SEC N-PORT | **Economic regime:** FRED and Treasury data |
 
+![Household overview in light mode](docs/screenshots/household-light.png)
+
+**Light mode:** the sun/moon button in the top bar switches themes, and the choice is remembered. Dark is the default.
+
 ---
 
 ## Technical highlights
