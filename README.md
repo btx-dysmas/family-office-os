@@ -45,8 +45,9 @@ The answer is this platform. It is my second project after [Intrinsic](https://g
 
 | When | What happened |
 |---|---|
-| **September 26, 2026** | Started the platform in Visual Studio Code, built around an Investment Policy Statement as a full-stack Next.js and TypeScript app |
-| **September–October 2026** | Kept building it and published it on GitHub and Vercel |
+| **2024** | First experiments in Visual Studio Code alongside Intrinsic: early portfolio and planning calculations |
+| **October 23, 2025** | Started this version of the platform |
+| **2026** | Rebuilt it around an Investment Policy Statement as a full-stack Next.js and TypeScript platform, and published it on GitHub and Vercel |
 
 The [development log](docs/DEVLOG.md) covers how the current version was designed and built.
 
