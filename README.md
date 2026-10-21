@@ -49,7 +49,7 @@ The answer is this platform. It is my second project after [Intrinsic](https://g
 | **October 23, 2025** | Started this version of the platform |
 | **2026** | Rebuilt it around an Investment Policy Statement as a full-stack Next.js and TypeScript platform, and published it on GitHub and Vercel |
 
-The [development log](docs/DEVLOG.md) covers how the current version was designed and built.
+The [development log](docs/DEVLOG.md) covers how the current version was designed and built. The commit history covers the current build.
 
 ## Built around an Investment Policy Statement
 
