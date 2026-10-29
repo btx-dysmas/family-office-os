@@ -20,7 +20,7 @@ export default function Estate() {
   const direct = children.length ? children : heirs;
 
   const nodes = ["Estate at death", "Irrevocable trusts and gifts", "Estate tax", "Charity", ...direct.map((p) => p.name.split(" ")[0])];
-  const heirsNet = s.gross - s.toCharity - s.tax;
+  const heirsNet = s.toHeirs - s.outsideEstate;
   const each = direct.length ? 1 / direct.length : 1;
   const links = [
     { s: 0, t: 2, v: s.tax, color: "rgba(239,107,107,0.35)" },
@@ -39,7 +39,7 @@ export default function Estate() {
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Taxable estate today" value={money(v.estate)} sub={`${money(e.excluded)} already outside the estate`} />
-        <Stat label="Federal exclusion" value={money(e.exclusion)} sub={e.married ? "Two exclusions of $15M with portability" : "One $15M exclusion"} />
+        <Stat label="Federal exclusion" value={money(e.exclusion - e.used)} sub={`${e.married ? "Two exclusions of $15M with portability" : "One $15M exclusion"}${e.used ? `, less ${money(e.used)} used by earlier gifts` : ""}`} />
         <Stat label="Projected estate tax" value={money(b.tax)} tone={b.tax > 0 ? "neg" : "pos"} sub={`At the second death, ${e.deathYear}, with no planning`} />
         <Stat label="Tax saved by strategy" value={money(b.tax - s.tax)} tone={b.tax - s.tax > 0 ? "pos" : undefined} sub={s.toHeirs >= b.toHeirs ? `Heirs receive ${money(s.toHeirs - b.toHeirs)} more` : `Heirs receive ${money(b.toHeirs - s.toHeirs)} less; charity receives ${money(s.toCharity)}`} />
       </div>
@@ -58,7 +58,7 @@ export default function Estate() {
             ["Growth assumed (real, median)", pct(e.rate, 2)],
             ["Years until transfer", String(e.years)],
           ]} />
-          <Note>Annual exclusion gifts ({usd(ESTATE.annualGift)} per donor per recipient in 2026) leave the estate without using any of the lifetime exclusion, and their growth accrues to heirs outside it. A transfer to an irrevocable trust today uses exclusion but freezes the value inside the estate. The estate tax rate is 40% above the exclusion.</Note>
+          <Note>Annual exclusion gifts ({usd(ESTATE.annualGift)} per donor per recipient in 2026) leave the estate without using any of the lifetime exclusion, and their growth accrues to heirs outside it. A transfer to an irrevocable trust today uses the same amount of exclusion, so its benefit is the growth that happens outside the estate; any part above the remaining exclusion owes 40% gift tax now. The estate tax rate is 40% above the exclusion.</Note>
         </Panel>
 
         <Panel title="Where the estate goes" sub={`Strategy case at ${e.deathYear}, in today's dollars`}>

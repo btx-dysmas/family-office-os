@@ -144,6 +144,7 @@ export type Household = {
   notes: Note[];
   tasks: Task[];
   documents?: Doc[];
+  exemptionUsed?: number; // lifetime gift and estate exclusion already used by taxable gifts
   beneficiaryReview?: string; // when beneficiary designations were last confirmed
   nextMeeting?: string;
   lastReview?: { date: string; probability: number; netWorth: number };

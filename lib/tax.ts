@@ -25,13 +25,29 @@ export function incomeTax(gross: number, filing: FilingStatus) {
 export function gainsRate(taxable: number, filing: FilingStatus) {
   const [zero, fifteen] = LTCG[filing];
   const base = taxable <= zero ? 0 : taxable <= fifteen ? 0.15 : 0.2;
-  return base + (taxable + STANDARD_DEDUCTION[filing] > NIIT.threshold[filing] ? NIIT.rate : 0);
+  return base + (taxable + STANDARD_DEDUCTION[filing] > NIIT.threshold[filing] ? NIIT.rate : 0); // MAGI ≈ taxable income + standard deduction
+}
+
+/**
+ * Federal tax on a long-term gain stacked on top of ordinary taxable income: the gain fills the 0%, 15% and 20% brackets
+ * in turn, and the 3.8% NIIT applies to the part of the gain that lifts income above the threshold.
+ */
+export function gainsTax(gain: number, ordinaryTaxable: number, filing: FilingStatus) {
+  if (gain <= 0) return 0;
+  const [zero, fifteen] = LTCG[filing], top = ordinaryTaxable + gain;
+  const at15 = Math.max(0, Math.min(top, fifteen) - Math.max(ordinaryTaxable, zero));
+  const at20 = Math.max(0, top - Math.max(ordinaryTaxable, fifteen));
+  const magi = top + STANDARD_DEDUCTION[filing];
+  const niit = Math.min(gain, Math.max(0, magi - NIIT.threshold[filing])) * NIIT.rate;
+  return 0.15 * at15 + 0.2 * at20 + niit;
 }
 
 export function householdRates(h: Household) {
   const wages = h.people.reduce((s, p) => s + (p.income ?? 0), 0);
   const t = incomeTax(wages, h.filing);
-  return { ordinary: t.marginal + (t.taxable + STANDARD_DEDUCTION[h.filing] > NIIT.threshold[h.filing] ? NIIT.rate : 0), gains: gainsRate(t.taxable, h.filing), effective: t.effective, wages };
+  const niit = wages > NIIT.threshold[h.filing] ? NIIT.rate : 0;
+  // Investment income on top of wages: ordinary rate for interest, preferential rate for gains, 28% cap for collectibles.
+  return { ordinary: t.marginal + niit, gains: gainsRate(t.taxable, h.filing), collectibles: Math.min(0.28, t.marginal) + niit, niit, effective: t.effective, wages };
 }
 
 // ── Social Security ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -41,22 +57,65 @@ export function pia(aime: number) {
   return 0.9 * Math.min(aime, bend1) + 0.32 * Math.max(0, Math.min(aime, bend2) - bend1) + 0.15 * Math.max(0, aime - bend2);
 }
 
-/** Benefit as a share of PIA when claiming at `age` (full retirement age 67). */
-export function claimFactor(age: number) {
-  const months = Math.round((age - SSA.fullRetirementAge) * 12);
-  if (months >= 0) return 1 + Math.min(months, 36) * (0.08 / 12); // 8% a year of delayed credits, to age 70
+/** Full retirement age by birth year: 66 through 1954, two months later for each year to 67 for 1960 and after. */
+export function fullRetirementAge(birthYear: number) {
+  if (birthYear <= 1954) return 66;
+  if (birthYear >= 1960) return SSA.fullRetirementAge;
+  return 66 + ((birthYear - 1954) * 2) / 12;
+}
+
+/** Worker's benefit as a share of PIA when claiming at `age`: 5/9% a month for the first 36 months early, 5/12% after, 2/3% a month delayed to 70. */
+export function claimFactor(age: number, fra: number = SSA.fullRetirementAge) {
+  const months = Math.round((Math.min(age, 70) - fra) * 12);
+  if (months >= 0) return 1 + months * (0.08 / 12);
   const early = -months;
   return 1 - Math.min(early, 36) * (5 / 900) - Math.max(0, early - 36) * (5 / 1200);
 }
 
+/** Spousal benefit as a share of the full 50% amount: 25/36% a month for the first 36 months early, 5/12% after, no delayed credits. */
+export function spousalFactor(age: number, fra: number = SSA.fullRetirementAge) {
+  const early = Math.max(0, Math.round((fra - age) * 12));
+  return 1 - Math.min(early, 36) * (25 / 3600) - Math.max(0, early - 36) * (5 / 1200);
+}
+
 /**
  * Annual benefit in today's dollars. AIME is approximated from current earnings, capped at the taxable maximum,
- * assuming a full career at today's real wage; a non-working spouse receives the 50% spousal benefit.
+ * assuming a full career at today's real wage. A spouse with a lower PIA receives their own benefit plus the excess of
+ * half the worker's PIA over it, each reduced for the claiming age.
  */
 export function socialSecurity(p: Person, spouse?: Person) {
+  const fra = fullRetirementAge(Number(p.dob.slice(0, 4)));
   const own = pia(Math.min(p.income ?? 0, SSA.wageBase) / 12);
-  const spousal = spouse ? 0.5 * pia(Math.min(spouse.income ?? 0, SSA.wageBase) / 12) : 0;
+  const half = spouse ? 0.5 * pia(Math.min(spouse.income ?? 0, SSA.wageBase) / 12) : 0;
   const claim = p.ssClaimAge ?? 67;
-  const monthly = own >= spousal ? own * claimFactor(claim) : spousal * Math.min(1, claimFactor(claim));
-  return { pia: own, monthly, annual: monthly * 12, claimAge: claim };
+  const monthly = own * claimFactor(claim, fra) + Math.max(0, half - own) * spousalFactor(claim, fra);
+  return { pia: own, monthly, annual: monthly * 12, claimAge: claim, fra, factor: monthly / (own || half || 1) };
+}
+
+/** Taxable part of Social Security benefits from provisional income (other income plus half the benefit); at most 85%. */
+export function taxableBenefits(benefits: number, otherIncome: number, filing: FilingStatus) {
+  const [base, adjusted] = filing === "mfj" ? [32_000, 44_000] : [25_000, 34_000];
+  const provisional = otherIncome + benefits / 2;
+  if (provisional <= base) return 0;
+  if (provisional <= adjusted) return Math.min(benefits / 2, (provisional - base) / 2);
+  return Math.min(0.85 * benefits, 0.85 * (provisional - adjusted) + Math.min(benefits / 2, (adjusted - base) / 2));
+}
+
+/**
+ * Pre-tax portfolio withdrawal that leaves `spending` after federal tax, given Social Security and other taxable income.
+ * Withdrawals are taxed as ordinary income stacked on top of the other income; solved by bisection.
+ */
+export function grossWithdrawal(spending: number, benefits: number, otherIncome: number, filing: FilingStatus) {
+  const net = (w: number) => {
+    const ordinary = w + otherIncome;
+    return w + otherIncome + benefits - incomeTax(ordinary + taxableBenefits(benefits, ordinary, filing), filing).tax;
+  };
+  if (net(0) >= spending) return 0;
+  let lo = 0, hi = spending * 2 + 1;
+  while (net(hi) < spending) hi *= 2;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (net(mid) < spending) lo = mid; else hi = mid;
+  }
+  return hi;
 }

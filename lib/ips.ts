@@ -3,7 +3,7 @@
 import { CLASS_LABEL, CLASSES, CMA, HARVEST_PAIR, isFund, portfolioStats } from "./cma";
 import { daysUntil, pct, sum } from "./format";
 import { drift, type Valuation } from "./household";
-import { householdRates } from "./tax";
+import { gainsTax, householdRates, incomeTax } from "./tax";
 import type { AssetClass, Household, TaxTreatment } from "./types";
 
 export type Status = "Compliant" | "Watch" | "Breach";
@@ -126,25 +126,46 @@ export function rebalance(h: Household, v: Valuation) {
     trades: trades.sort((a, b) => a.accountName.localeCompare(b.accountName) || (a.action === "Sell" ? -1 : 1)),
     turnover: sum(trades.filter((t) => t.action === "Sell").map((t) => t.amount)),
     realized,
-    tax: Math.max(0, realized) * rates.gains,
+    tax: gainsTax(realized, incomeTax(rates.wages, h.filing).taxable, h.filing),
     required: breaches.length > 0 || trades.some((t) => t.action === "Sell" && !isFund(t.symbol) && t.symbol !== "$CASH"),
     breaches,
   };
 }
 
 // ── Asset location ──────────────────────────────────────────────────────────────────────────────────────────────
-/** Annual tax cost per dollar held in a taxable account. */
+/** Yield on intermediate national municipal bonds, federally tax-exempt (planning assumption). */
+const MUNI_YIELD = 0.031;
+const MUNI = new Set(["MUB", "VTEB"]);
+/** Holding period over which unrealized growth is assumed to be sold and taxed. */
+const SALE_HORIZON = 10;
+
+/**
+ * Annual return lost to tax on growth that is deferred until sale: grow at r for H years, pay tax t on the gain, and
+ * express the after-tax result as a yearly rate. r − [((1 + r)ᴴ(1 − t) + t)^(1/H) − 1].
+ */
+export const deferredDrag = (r: number, t: number, H = SALE_HORIZON) => r - (((1 + r) ** H * (1 - t) + t) ** (1 / H) - 1);
+
+/**
+ * Annual tax cost per dollar held in a taxable account rather than a tax-deferred one: tax on the yield each year plus
+ * tax on price growth when it is eventually sold. Taxable bonds cost the lesser of tax on interest and the yield given up
+ * by holding municipal bonds instead.
+ */
 export function taxDrag(h: Household): Record<AssetClass, number> {
   const r = householdRates(h);
+  // Compound (median) price growth: total median return less the part paid out as yield.
+  const growth = (c: AssetClass) => Math.max(0, (1 + CMA[c].mean) / Math.sqrt(1 + (CMA[c].vol / (1 + CMA[c].mean)) ** 2) - 1 - CMA[c].yield);
   return {
-    bonds: CMA.bonds.yield * r.ordinary,
-    realestate: CMA.realestate.yield * r.ordinary, // REIT dividends are mostly non-qualified
+    bonds: Math.min(CMA.bonds.yield * r.ordinary, Math.max(0, CMA.bonds.yield - MUNI_YIELD)),
+    realestate: CMA.realestate.yield * r.ordinary + deferredDrag(growth("realestate"), r.gains), // REIT dividends are mostly non-qualified
     cash: CMA.cash.yield * r.ordinary,
-    alts: 0.01, // gold is taxed as a collectible (28%) when sold; spread as an annual equivalent
-    us: CMA.us.yield * r.gains,
-    intl: Math.max(0, CMA.intl.yield * r.gains - 0.002), // net of the foreign tax credit
+    alts: deferredDrag(growth("alts"), r.collectibles), // gold is a collectible: gains taxed at up to 28%
+    us: CMA.us.yield * r.gains + deferredDrag(growth("us"), r.gains),
+    intl: Math.max(0, CMA.intl.yield * r.gains - CMA.intl.yield * 0.07) + deferredDrag(growth("intl"), r.gains), // foreign tax credit recovers ~7% withholding
   };
 }
+
+/** Drag on a specific holding in a taxable account; municipal bond funds owe no federal tax on interest. */
+const holdingDrag = (drag: Record<AssetClass, number>, symbol: string, cls: AssetClass) => (MUNI.has(symbol) ? Math.max(0, CMA.bonds.yield - MUNI_YIELD) : drag[cls]);
 
 /** Place the least tax-efficient sleeves in tax-deferred accounts and the highest-growth sleeves in Roth accounts. */
 export function assetLocation(h: Household, v: Valuation) {
@@ -169,7 +190,7 @@ export function assetLocation(h: Household, v: Valuation) {
   fill("taxable", CLASSES);
 
   const currentTaxable = Object.fromEntries(CLASSES.map((c) => [c, sum(v.positions.filter((p) => p.account.inPolicy && p.account.tax === "taxable" && p.cls === c).map((p) => p.value))])) as Record<AssetClass, number>;
-  const currentDrag = sum(CLASSES.map((c) => currentTaxable[c] * drag[c]));
+  const currentDrag = sum(v.positions.filter((p) => p.account.inPolicy && p.account.tax === "taxable").map((p) => p.value * holdingDrag(drag, p.symbol, p.cls)));
   const optimalDrag = sum(CLASSES.map((c) => plan[c].taxable * drag[c]));
   const current = Object.fromEntries(CLASSES.map((c) => [c, {
     taxable: currentTaxable[c],

@@ -3,7 +3,7 @@ import { INFLATION, portfolioStats, type Weights } from "./cma";
 import { thisYear } from "./format";
 import { clients, primary, retireYear, targetWeights, type Valuation } from "./household";
 import { COLLEGE_INFLATION } from "./reference";
-import { incomeTax, socialSecurity } from "./tax";
+import { grossWithdrawal, socialSecurity } from "./tax";
 import type { Goal, Household, LifeEvent } from "./types";
 
 // Seeded generator so a plan gives the same answer every time it is opened.
@@ -67,13 +67,12 @@ export function buildPlan(h: Household, v: Valuation, events: LifeEvent[] = h.ev
       }
       flows.push({ year: y, amount: save, label: "Savings", priority: 0 });
     } else {
-      // Retirement need net of Social Security and other income, grossed up for federal tax on withdrawals.
+      // Withdrawal that covers spending after Social Security and other income, and after federal tax on all of it.
       const ss = people.reduce((sum, p) => {
         const claimYear = Number(p.dob.slice(0, 4)) + (p.ssClaimAge ?? 67);
         return sum + (y >= claimYear && !(divorce && y >= divorce.year && p.id !== me.id) ? socialSecurity(p, people.find((x) => x.id !== p.id)).annual : 0);
       }, 0);
-      const need = Math.max(0, h.retirementSpending * spendScale(y) - ss - h.otherIncome);
-      const gross = need > 0 ? need / (1 - incomeTax(need, h.filing).effective) : 0;
+      const gross = grossWithdrawal(h.retirementSpending * spendScale(y), ss, h.otherIncome, h.filing);
       if (gross > 0) flows.push({ year: y, amount: -gross, label: "Retirement spending", goal: h.goals.find((g) => g.type === "retirement")?.id, priority: 1 });
     }
   }
@@ -161,12 +160,13 @@ export function simulate(plan: Plan, runs = 5000, seed = 11) {
   const bands = qs.map(() => [] as number[]);
   for (const col of paths) {
     const sorted = Float64Array.from(col).sort();
-    qs.forEach((q, i) => bands[i].push(sorted[Math.round(q * (runs - 1))]));
+    qs.forEach((q, i) => bands[i].push(quantile(sorted, q)));
   }
   const sortedEnd = Float64Array.from(ending).sort();
-  const at = (q: number) => sortedEnd[Math.round(q * (runs - 1))];
+  const at = (q: number) => quantile(sortedEnd, q);
   const probability: Record<string, number> = Object.fromEntries(goalIds.map((g) => [g, wins.get(g)! / runs]));
   if (plan.legacy) probability[plan.legacy.id] = legacyWins / runs;
+  const depletedSorted = [...depletedAt].sort((a, b) => a - b);
   const retirement = plan.retirementGoal ? probability[plan.retirementGoal] ?? 1 : 1 - depletedAt.length / runs;
 
   return {
@@ -176,14 +176,23 @@ export function simulate(plan: Plan, runs = 5000, seed = 11) {
     probability,
     success: retirement,
     depletion: depletedAt.length / runs,
-    medianDepletionYear: depletedAt.length ? [...depletedAt].sort((a, b) => a - b)[Math.floor(depletedAt.length / 2)] : null,
+    medianDepletionYear: depletedSorted.length ? depletedSorted[Math.floor((depletedSorted.length - 1) / 2)] : null,
     ending: { worst: sortedEnd[0], p5: at(0.05), p10: at(0.1), median: at(0.5), p90: at(0.9), p95: at(0.95), best: sortedEnd[runs - 1] },
     endingSample: Array.from(sortedEnd.filter((_, i) => i % Math.max(1, Math.floor(runs / 2000)) === 0)),
   };
 }
 
-/** Median real return implied by the plan (geometric), used by the deterministic projections. */
-export const medianReal = (p: Plan) => (1 + p.mean - p.vol ** 2 / 2) / (1 + p.inflation) - 1;
+/** Quantile of sorted values with linear interpolation between ranks (the same rule as Excel's PERCENTILE.INC). */
+export function quantile(sorted: ArrayLike<number>, q: number) {
+  const pos = q * (sorted.length - 1), lo = Math.floor(pos), hi = Math.min(lo + 1, sorted.length - 1);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+}
+
+/**
+ * Median real return of the simulated lognormal, used by the deterministic projections:
+ * the median of 1 + R is (1 + mean) / √(1 + (vol / (1 + mean))²), then deflated by inflation.
+ */
+export const medianReal = (p: Plan) => (1 + p.mean) / Math.sqrt(1 + (p.vol / (1 + p.mean)) ** 2) / (1 + p.inflation) - 1;
 
 /** Probability that a portfolio sustains a fixed real withdrawal rate for `horizon` years at the given mix. */
 export function withdrawalSuccess(weights: Weights, fee: number, rate: number, horizon: number, runs = 1500) {

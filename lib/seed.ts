@@ -140,6 +140,7 @@ const BOOK: Household[] = [
       { id: "d2", name: "Updated IRA beneficiary designations", status: "Signed", date: "2026-05-09" },
       { id: "d3", name: "Revocable trust restatement (Morgan & Pell)", status: "Review due", date: "2021-04-30" },
     ],
+    exemptionUsed: 5_000_000, // 2021 gifts to the dynasty trust, split between both spouses
     beneficiaryReview: "2026-05-09",
     nextMeeting: "2026-10-09",
     lastReview: { date: "2026-06-19", probability: 0.9, netWorth: 58_000_000 },

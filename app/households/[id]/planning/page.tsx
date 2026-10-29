@@ -11,7 +11,7 @@ import { useHH } from "@/lib/household-context";
 import { buildPlan, simulate, withdrawalSuccess } from "@/lib/montecarlo";
 import { affordability, education, retirementGap } from "@/lib/planning";
 import { TUITION } from "@/lib/reference";
-import { claimFactor, socialSecurity } from "@/lib/tax";
+import { socialSecurity } from "@/lib/tax";
 import type { LifeEvent, LifeEventType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -137,7 +137,7 @@ export default function Planning() {
             ["Extra savings to close the gap", gap.extraSavings ? `${usd(gap.extraSavings)}/yr` : "None needed"],
             ["Median real return assumed", pct(gap.rate, 2)],
           ]} />
-          <Note>&quot;Needed&quot; is the present value, at retirement, of every later withdrawal: spending net of Social Security and other income, grossed up for federal tax, plus goals after retirement.</Note>
+          <Note>&quot;Needed&quot; is the present value, at retirement, of every later withdrawal: the withdrawal that leaves planned spending after federal tax, with withdrawals and other income taxed as ordinary income and up to 85% of Social Security taxable, plus goals after retirement.</Note>
         </Panel>
 
         <Panel title="Withdrawal rate analysis" sub="Chance a fixed real withdrawal lasts, at the policy mix">
@@ -159,12 +159,12 @@ export default function Planning() {
           <table className="grid-table">
             <thead><tr><th>Person</th><th className="r">PIA / mo</th><th className="r">Claim age</th><th className="r">Annual benefit</th></tr></thead>
             <tbody>
-              {ss.map(({ p, pia, annual, claimAge }) => (
-                <tr key={p.id}><td>{p.name.split(" ")[0]}</td><td className="r">{usd(pia)}</td><td className="r">{claimAge} ({pct(claimFactor(claimAge), 0)})</td><td className="r font-semibold">{usd(annual)}</td></tr>
+              {ss.map(({ p, pia, annual, claimAge, factor }) => (
+                <tr key={p.id}><td>{p.name.split(" ")[0]}</td><td className="r">{usd(pia)}</td><td className="r">{claimAge} ({pct(factor, 0)})</td><td className="r font-semibold">{usd(annual)}</td></tr>
               ))}
             </tbody>
           </table>
-          <Note>PIA = 90% of AIME up to $1,286, 32% up to $7,749 and 15% above (2026 bend points), with AIME approximated from current pay capped at the $184,500 wage base. Claiming at 62 cuts the benefit to 70% of PIA; waiting to 70 raises it to 124%. A non-working spouse receives up to 50% of the worker&apos;s PIA. Figures are in today&apos;s dollars; use SSA statements for exact amounts.</Note>
+          <Note>PIA = 90% of AIME up to $1,286, 32% up to $7,749 and 15% above (2026 bend points), with AIME approximated from current pay capped at the $184,500 wage base. With a full retirement age of 67, claiming at 62 cuts the benefit to 70% of PIA and waiting to 70 raises it to 124%; full retirement age is earlier for anyone born before 1960. A lower-earning spouse also receives the amount by which half the worker&apos;s PIA exceeds their own, reduced if claimed early and never increased by waiting. Figures are in today&apos;s dollars; use SSA statements for exact amounts.</Note>
         </Panel>
       </div>
 

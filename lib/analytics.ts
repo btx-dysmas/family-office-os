@@ -22,7 +22,8 @@ export function analyze(v: Valuation, prices: Prices, days: number, rf: number) 
 
   const idx = prices.dates.map((_, i) => i).filter((i) => prices.bench[i] != null && holdings.every((x) => x.symbol === "$CASH" || prices.series[x.symbol][i] != null)).slice(-(days + 1));
   if (idx.length < 60) return null;
-  const cashDaily = rf / 252;
+  const rfDaily = (1 + rf) ** (1 / 252) - 1; // daily rate that compounds to the T-bill yield
+  const cashDaily = rfDaily;
   const rets = holdings.map((x) => idx.slice(1).map((i, k) => (x.symbol === "$CASH" ? cashDaily : (prices.series[x.symbol][i] as number) / (prices.series[x.symbol][idx[k]] as number) - 1)));
   const bench = idx.slice(1).map((i, k) => (prices.bench[i] as number) / (prices.bench[idx[k]] as number) - 1);
   const w = holdings.map((x) => x.weight / covered);
@@ -33,8 +34,11 @@ export function analyze(v: Valuation, prices: Prices, days: number, rf: number) 
   const dd = (g: number[]) => { let pk = -Infinity; return g.map((x) => { pk = Math.max(pk, x); return x / pk - 1; }); };
   const stats = (r: number[]) => {
     const g = grow(r), cagr = g[g.length - 1] ** (1 / years) - 1, vol = sd(r) * Math.sqrt(252);
-    const downside = Math.sqrt(sum(r.map((x) => Math.min(0, x - rf / 252) ** 2)) / r.length) * Math.sqrt(252);
-    return { total: g[g.length - 1] - 1, cagr, vol, downside, sharpe: (cagr - rf) / vol, sortino: (cagr - rf) / downside, maxDD: Math.min(...dd(g)), growth: g };
+    // Sharpe and Sortino use the annualized arithmetic mean of daily excess returns, the standard definition;
+    // downside deviation is the root mean square of returns below the risk-free rate.
+    const excess = mean(r.map((x) => x - rfDaily)) * 252;
+    const downside = Math.sqrt(sum(r.map((x) => Math.min(0, x - rfDaily) ** 2)) / r.length) * Math.sqrt(252);
+    return { total: g[g.length - 1] - 1, cagr, vol, downside, sharpe: excess / vol, sortino: excess / downside, maxDD: Math.min(...dd(g)), growth: g };
   };
   const P = stats(port), B = stats(bench);
   const varP = cov(port, port), varB = cov(bench, bench);

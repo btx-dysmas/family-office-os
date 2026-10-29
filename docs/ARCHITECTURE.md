@@ -78,7 +78,7 @@ Every household page shares one memoized model (`lib/data.ts`, `app/households/[
 
 1. **Quotes.** Live prices for every holding (`/api/quotes`), falling back to the last known price stored with each holding so pages render instantly.
 2. **Valuation** (`value()`): positions at market; account totals; policy-portfolio weights across six asset classes; cash available to the family; liquid, illiquid and residential assets; debts; net worth; estate value; and ratios (debt to assets, months of cash, liquid assets to debt, illiquid share, savings rate).
-3. **Plan** (`buildPlan()`): a year-by-year list of cash flows (savings until retirement; retirement spending net of Social Security and other income, grossed up for federal tax; education, home and purchase goals; life events) plus return assumptions from the IPS targets.
+3. **Plan** (`buildPlan()`): a year-by-year list of cash flows (savings until retirement; the withdrawal that leaves retirement spending after federal tax on withdrawals, other income and taxable Social Security; education, home and purchase goals; life events) plus return assumptions from the IPS targets.
 4. **Simulation** (`simulate()`): 5,000 Monte Carlo paths by default.
 
 ## 5. The IPS as executable policy
@@ -87,7 +87,7 @@ Every household page shares one memoized model (`lib/data.ts`, `app/households/[
 
 - **`compliance()`** checks allocation ranges, expected volatility, the worst historical stress loss, single-security concentration (diversified funds exempt), the cash reserve, the illiquid share, expected return after fees and the review date. Each rule is Compliant, Watch (within about 10% of the limit) or Breach.
 - **`rebalance()`** first trims any single security above the position limit, then brings each sleeve back to target. Sells come from tax-deferred and Roth accounts first, then from taxable lots with the lowest gain (losses first). Buys follow asset-location preferences but use only cash raised in the same account, so money never moves between accounts. Bank and money-market accounts are never traded, and gaps under 0.5% of the portfolio are ignored.
-- **`assetLocation()`** fills tax-deferred accounts with the sleeves that have the highest annual tax drag (yield × the household's ordinary rate, including the 3.8% NIIT), Roth accounts with the highest expected return, and taxable accounts with the rest, then compares the tax drag with the current placement.
+- **`assetLocation()`** fills tax-deferred accounts with the sleeves that have the highest annual tax drag (tax on yield plus deferred tax on growth, at the household's own rates including the 3.8% NIIT, with municipal bonds as the taxable alternative), Roth accounts with the highest expected return, and taxable accounts with the rest, then compares the tax drag with the current placement.
 - **`harvest()`** finds taxable positions more than 3% and $1,000 below cost and pairs each with a fund tracking a different index.
 
 The same IPS feeds the risk questionnaire (which can rewrite the profile and targets), the investment committee (whose tilts are clamped to each family's ranges), the meeting brief and the PDF report.
@@ -106,7 +106,7 @@ The same IPS feeds the risk questionnaire (which can rewrite the profile and tar
 
 ## 7. Planning, tax and estate
 
-- **Tax** (`lib/tax.ts`): 2026 ordinary brackets for three filing statuses, the standard deduction, capital gains brackets and the NIIT; Social Security PIA from the 90/32/15 formula with 2026 bend points, early-claiming reductions and delayed credits, and a spousal benefit.
+- **Tax** (`lib/tax.ts`): 2026 ordinary brackets for three filing statuses, the standard deduction, capital gains brackets and the NIIT; Social Security PIA from the 90/32/15 formula with 2026 bend points, full retirement age by birth year, early-claiming reductions and delayed credits, a spousal benefit with its own reduction schedule, and the provisional-income test for taxing benefits.
 - **Retirement gap:** projected assets at retirement at the median real return against the present value of all later withdrawals, and the extra annual saving that would close any gap.
 - **Education:** College Board tuition plus a living-cost assumption, inflating 3.5% a year; 529 balances projected; the level monthly contribution to fully fund each goal.
 - **Affordability:** the 28/36 rule at the latest 30-year mortgage rate from FRED.

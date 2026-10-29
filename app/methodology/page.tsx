@@ -21,29 +21,29 @@ const MODELS: [string, string[]][] = [
   ]],
   ["Monte Carlo simulation", [
     "Each year's nominal portfolio return is drawn from a lognormal distribution matched to the policy mix's arithmetic mean (net of the advisory fee) and volatility, then deflated by 2.5% inflation, so everything is in today's dollars.",
-    "Cash flows are applied at the start of each year: savings until the primary client retires; after retirement, spending minus Social Security and other income, grossed up for federal income tax; education costs (growing 1% a year faster than inflation); home and other purchases.",
+    "Cash flows are applied at the start of each year: savings until the primary client retires; after retirement, the withdrawal that leaves planned spending after federal income tax, solved exactly with withdrawals and other income taxed as ordinary income stacked on the brackets and up to 85% of Social Security taxable under the provisional-income test; education costs (growing 1% a year faster than inflation); home and other purchases.",
     "Within a year, inflows come first and outflows are paid in goal-priority order (essential, then discretionary, then aspirational). A goal succeeds on a path only if it is paid in full; retirement succeeds if spending is met every year to the planning age; the legacy goal succeeds if ending wealth plus assets passing to heirs meets the target.",
-    "Probability of success = successful paths ÷ total paths (1,000, 5,000 or 10,000). A seeded random number generator makes results repeatable.",
+    "Probability of success = successful paths ÷ total paths (1,000, 5,000 or 10,000). A seeded random number generator makes results repeatable. Percentile bands interpolate linearly between ranked paths.",
     "Life events: a market crash replaces that year's draw; job loss removes the earner's after-tax pay (70% of gross) from savings; an inflation spike lowers real returns by the surprise times the nominal share of the portfolio plus half the equity share; divorce transfers a share of assets, halves savings and cuts spending to 65%; home purchases, new children and inheritances add cash flows.",
   ]],
   ["Retirement engine", [
-    "Projected assets at retirement grow current investable assets and savings at the median real return, (1 + μ − σ²/2) ÷ (1 + inflation) − 1.",
+    "Projected assets at retirement grow current investable assets and savings at the median real return of the simulated lognormal, (1 + μ) ÷ √(1 + (σ ÷ (1 + μ))²) ÷ (1 + inflation) − 1.",
     "Needed at retirement = present value at retirement of every later withdrawal at the same return. Surplus or shortfall = projected − needed.",
-    "Extra savings to close a shortfall = shortfall × r ÷ ((1 + r)ⁿ − 1). The withdrawal-rate grid runs 1,500 simulations for each rate and horizon at the policy mix.",
+    "Extra savings to close a shortfall = shortfall ÷ [((1 + r)ⁿ − 1) ÷ r × (1 + r)], an annuity due because savings are added at the start of each year. The withdrawal-rate grid runs 1,500 simulations for each rate and horizon at the policy mix.",
   ]],
   ["Social Security", [
     `PIA = 90% of AIME up to ${d(SSA.bend1)} + 32% up to ${d(SSA.bend2)} + 15% above (2026 bend points). AIME is approximated as current earnings, capped at the ${d(SSA.wageBase)} wage base, ÷ 12.`,
-    "Claiming before 67 reduces the benefit by 5/9 of 1% a month for 36 months and 5/12 of 1% beyond; delayed retirement credits add 8% a year to 70. A spouse without earnings receives up to 50% of the worker's PIA.",
+    "Full retirement age is 67 for anyone born in 1960 or later and steps down two months a year to 66 for 1954 and earlier. Claiming early reduces the benefit by 5/9 of 1% a month for 36 months and 5/12 of 1% beyond; delayed retirement credits add 2/3 of 1% a month to 70. A lower-earning spouse adds the excess of half the worker's PIA over their own, reduced by 25/36 of 1% a month for 36 months early and 5/12 of 1% beyond, with no delayed credits.",
   ]],
   ["Education, housing and estate", [
-    `College cost = College Board 2025–26 published tuition and fees + a ${d(LIVING_COST_ASSUMPTION)} living-cost assumption, inflating ${p(COLLEGE_INFLATION)} a year. Monthly contribution solves for the level saving that funds the present value of costs at the first tuition bill.`,
+    `College cost = College Board 2025–26 published tuition and fees + a ${d(LIVING_COST_ASSUMPTION)} living-cost assumption, inflating ${p(COLLEGE_INFLATION)} a year. Savings compound at the median return of a 60/20/20 mix after a 0.5% fee, and the monthly contribution solves for the level saving, at the monthly rate equivalent to that annual return, that funds the present value of costs at the first tuition bill.`,
     "Home affordability applies the 28/36 rule: housing cost ≤ 28% of gross monthly income and all debt payments ≤ 36%, at the latest 30-year mortgage rate from FRED, with property tax and insurance at 1.5% of value a year.",
-    `Estate tax = 40% × (estate at the second death − charitable bequests − exclusion). The exclusion is ${d(ESTATE.exclusion)} per person (doubled for married couples through portability). Annual exclusion gifts of ${d(ESTATE.annualGift)} per donor per recipient leave the estate and compound for heirs.`,
+    `Estate tax = 40% × (estate at the second death − charitable bequests − remaining exclusion). The exclusion is ${d(ESTATE.exclusion)} per person (doubled for married couples through portability), less any exclusion already used by taxable gifts. A transfer to an irrevocable trust uses exclusion dollar for dollar, with 40% gift tax on any excess. Annual exclusion gifts of ${d(ESTATE.annualGift)} per donor per recipient leave the estate and compound for heirs.`,
   ]],
   ["Investment policy engine", [
     "Every IPS rule is evaluated live: allocation ranges, expected volatility, loss in the worst historical stress, single-security limit (funds exempt), cash reserve, illiquid share, expected return after fees and the annual review date. Each is Compliant, Watch (within about 10% of the limit) or Breach.",
-    "Rebalancing sells overweight sleeves in tax-deferred and Roth accounts first, then taxable lots with the lowest gain; buys follow asset-location preferences using only cash raised in the same account.",
-    "Asset location fills tax-deferred accounts with the highest annual tax drag (yield × ordinary rate for bonds, REITs and cash), Roth accounts with the highest expected return, and taxable accounts with the rest. Savings = tax drag of the current placement − tax drag of the optimized one.",
+    "Rebalancing sells overweight sleeves in tax-deferred and Roth accounts first, then taxable lots with the lowest gain; the estimated tax stacks realized gains on top of wage income through the 0%, 15% and 20% brackets plus the NIIT; buys follow asset-location preferences using only cash raised in the same account.",
+    "Asset location fills tax-deferred accounts with the highest annual tax drag, Roth accounts with the highest expected return, and taxable accounts with the rest. Drag = yield × the rate it is taxed at (ordinary for interest, cash and REITs; qualified for stock dividends, less the foreign tax credit) + tax on price growth when sold, annualized over 10 years: r − [((1 + r)¹⁰(1 − t) + t)^(1/10) − 1], with gold taxed as a collectible at up to 28%. Taxable bonds cost the lesser of tax on interest and the yield given up in municipal bonds (3.1%), and municipal funds already held owe no federal tax. Savings = drag of the current placement − drag of the optimized one.",
     "Tax-loss harvesting flags taxable positions more than 3% and $1,000 below cost and pairs each with a fund tracking a different index.",
   ]],
   ["Risk", [
@@ -53,7 +53,7 @@ const MODELS: [string, string[]][] = [
   ]],
   ["Performance analytics", [
     "Current holdings are held at today's weights and rebalanced daily over the window; cash earns the T-bill yield.",
-    "CAGR = ending value^(1/years) − 1. Downside deviation uses daily returns below the risk-free rate. Sortino = (CAGR − risk-free) ÷ downside deviation. Beta = cov(portfolio, SPY) ÷ var(SPY). Maximum drawdown is the deepest peak-to-trough decline.",
+    "CAGR = ending value^(1/years) − 1. Downside deviation uses daily returns below the risk-free rate. Historical Sharpe = annualized mean daily excess return over T-bills ÷ annualized volatility; Sortino uses downside deviation in place of volatility. Beta = cov(portfolio, SPY) ÷ var(SPY). Maximum drawdown is the deepest peak-to-trough decline.",
     "Performance contribution = weight × annualized return; risk contribution = weight × cov(holding, portfolio) ÷ var(portfolio).",
   ]],
   ["Economic regime and investment committee", [
