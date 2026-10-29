@@ -46,6 +46,9 @@ export function portfolioStats(w: Weights) {
   return { mean, vol: Math.sqrt(variance) };
 }
 
+/** Median (compound) annual return of a lognormal with arithmetic mean `mean` and volatility `vol`. */
+export const compound = (mean: number, vol: number) => (1 + mean) / Math.sqrt(1 + (vol / (1 + mean)) ** 2) - 1;
+
 /** Each class's share of portfolio variance: wᵢ(Σw)ᵢ / wᵀΣw. */
 export function riskContribution(w: Weights) {
   const v = CLASSES.map((c) => w[c] ?? 0);
@@ -106,6 +109,7 @@ export const DURATION: Record<string, number> = {
 export const HARVEST_PAIR: Record<string, string> = {
   VTI: "ITOT", ITOT: "VTI", VOO: "IVV", IVV: "VOO", SPY: "VOO", VXUS: "IXUS", IXUS: "VXUS", VEA: "IEFA", IEFA: "VEA", VWO: "IEMG",
   IEMG: "VWO", BND: "AGG", AGG: "BND", VNQ: "SCHH", SCHH: "VNQ", QQQ: "VUG", VUG: "SCHG", SCHD: "VYM", VYM: "SCHD", TLT: "VGLT",
+  VGLT: "TLT", MUB: "VTEB", VTEB: "MUB", IEF: "VGIT", VGIT: "IEF", TIP: "SCHP", SCHP: "TIP", LQD: "VCIT", VCIT: "LQD",
 };
 
 /** Strategic allocations by risk profile, the starting point for an investment policy. */

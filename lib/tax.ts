@@ -1,5 +1,5 @@
 // Federal income tax, capital gains rates and Social Security benefits under 2026 rules.
-import { BRACKETS, LTCG, NIIT, SSA, STANDARD_DEDUCTION } from "./reference";
+import { BRACKETS, LTCG, NIIT, SENIOR, SS_TAX_THRESHOLDS, SSA, STANDARD_DEDUCTION } from "./reference";
 import type { FilingStatus, Household, Person } from "./types";
 
 /** Tax on ordinary taxable income (after deductions), with the marginal rate. */
@@ -32,12 +32,12 @@ export function gainsRate(taxable: number, filing: FilingStatus) {
  * Federal tax on a long-term gain stacked on top of ordinary taxable income: the gain fills the 0%, 15% and 20% brackets
  * in turn, and the 3.8% NIIT applies to the part of the gain that lifts income above the threshold.
  */
-export function gainsTax(gain: number, ordinaryTaxable: number, filing: FilingStatus) {
+export function gainsTax(gain: number, ordinaryTaxable: number, filing: FilingStatus, magi?: number) {
   if (gain <= 0) return 0;
   const [zero, fifteen] = LTCG[filing], top = ordinaryTaxable + gain;
   const at15 = Math.max(0, Math.min(top, fifteen) - Math.max(ordinaryTaxable, zero));
   const at20 = Math.max(0, top - Math.max(ordinaryTaxable, fifteen));
-  const magi = top + STANDARD_DEDUCTION[filing];
+  magi ??= top + STANDARD_DEDUCTION[filing];
   const niit = Math.min(gain, Math.max(0, magi - NIIT.threshold[filing])) * NIIT.rate;
   return 0.15 * at15 + 0.2 * at20 + niit;
 }
@@ -94,22 +94,44 @@ export function socialSecurity(p: Person, spouse?: Person) {
 
 /** Taxable part of Social Security benefits from provisional income (other income plus half the benefit); at most 85%. */
 export function taxableBenefits(benefits: number, otherIncome: number, filing: FilingStatus) {
-  const [base, adjusted] = filing === "mfj" ? [32_000, 44_000] : [25_000, 34_000];
+  const [base, adjusted] = SS_TAX_THRESHOLDS[filing];
   const provisional = otherIncome + benefits / 2;
   if (provisional <= base) return 0;
   if (provisional <= adjusted) return Math.min(benefits / 2, (provisional - base) / 2);
   return Math.min(0.85 * benefits, 0.85 * (provisional - adjusted) + Math.min(benefits / 2, (adjusted - base) / 2));
 }
 
+/** Standard deduction including the additional amount and the 2025–2028 senior deduction for each person 65 or older. */
+export function deduction(filing: FilingStatus, seniors: number, magi: number, year: number) {
+  const bonusYears = year >= SENIOR.bonusFrom && year <= SENIOR.bonusTo;
+  const bonus = bonusYears ? Math.max(0, SENIOR.bonus - SENIOR.bonusRate * Math.max(0, magi - SENIOR.bonusThreshold[filing])) : 0;
+  return STANDARD_DEDUCTION[filing] + seniors * (SENIOR.additional[filing] + bonus);
+}
+
+/** Where a retirement withdrawal comes from, pro rata across the household's accounts. */
+export type WithdrawalMix = { deferred: number; gains: number }; // share taxed as ordinary income; share that is long-term gain
+
+export type TaxYear = { filing: FilingStatus; seniors: number; year: number; mix: WithdrawalMix; rmd?: number };
+
+/** Federal tax for a retirement year: withdrawals split into ordinary income and gains, Social Security, other income. */
+export function retirementTax(w: number, benefits: number, otherIncome: number, t: TaxYear) {
+  // A required minimum distribution larger than the pro-rata draw is taxed in full; the excess is reinvested.
+  const ordinary = otherIncome + Math.max(t.mix.deferred * w, t.rmd ?? 0), gains = t.mix.gains * w;
+  const taxableSS = taxableBenefits(benefits, ordinary + gains, t.filing);
+  const agi = ordinary + gains + taxableSS;
+  const taxable = Math.max(0, agi - deduction(t.filing, t.seniors, agi, t.year));
+  // Deductions offset ordinary income first; gains sit on top of it in the capital gains brackets.
+  const gainPart = Math.min(gains, taxable), ordPart = taxable - gainPart;
+  return ordinaryTax(ordPart, t.filing).tax + gainsTax(gainPart, ordPart, t.filing, agi);
+}
+
 /**
- * Pre-tax portfolio withdrawal that leaves `spending` after federal tax, given Social Security and other taxable income.
- * Withdrawals are taxed as ordinary income stacked on top of the other income; solved by bisection.
+ * Portfolio withdrawal that leaves `spending` after federal tax, given Social Security and other taxable income.
+ * Only the tax-deferred share of a withdrawal is ordinary income and only the embedded gain in the taxable share is
+ * taxed (Roth withdrawals and cost basis are tax-free). Solved by bisection.
  */
-export function grossWithdrawal(spending: number, benefits: number, otherIncome: number, filing: FilingStatus) {
-  const net = (w: number) => {
-    const ordinary = w + otherIncome;
-    return w + otherIncome + benefits - incomeTax(ordinary + taxableBenefits(benefits, ordinary, filing), filing).tax;
-  };
+export function grossWithdrawal(spending: number, benefits: number, otherIncome: number, t: TaxYear) {
+  const net = (w: number) => w + otherIncome + benefits - retirementTax(w, benefits, otherIncome, t);
   if (net(0) >= spending) return 0;
   let lo = 0, hi = spending * 2 + 1;
   while (net(hi) < spending) hi *= 2;

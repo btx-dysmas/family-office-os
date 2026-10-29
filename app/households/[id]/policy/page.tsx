@@ -3,7 +3,7 @@ import { CheckCircle2, CircleAlert, Eye, Pencil, Printer } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Panel, Pill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { CLASS_LABEL, CLASSES, portfolioStats } from "@/lib/cma";
+import { CLASS_LABEL, CLASSES, compound, portfolioStats } from "@/lib/cma";
 import { date, money, pct, prob, sum, thisYear, today } from "@/lib/format";
 import { targetWeights } from "@/lib/household";
 import { useHH } from "@/lib/household-context";
@@ -90,7 +90,7 @@ export default function Policy() {
 
           <Article n="II" title="Investment objectives">
             {edit ? <textarea className="field h-20 py-2" value={draft.objective} onChange={(e) => setDraft({ ...draft, objective: e.target.value })} /> : <p>{ips.objective}</p>}
-            <p>Target return: {edit ? num(draft.returnTarget, (x) => setDraft({ ...draft, returnTarget: x / 100 }), 0.25) : <b>{pct(ips.returnTarget)} a year after fees</b>}, measured over rolling five-year periods. The policy mix is expected to return {pct(policyStats.mean - ips.advisoryFee)} after the {pct(ips.advisoryFee, 2)} advisory fee, with {pct(policyStats.vol)} annual volatility.</p>
+            <p>Target return: {edit ? num(draft.returnTarget, (x) => setDraft({ ...draft, returnTarget: x / 100 }), 0.25) : <b>{pct(ips.returnTarget)} a year after fees</b>}, measured over rolling five-year periods. The policy mix is expected to compound at {pct(compound(policyStats.mean - ips.advisoryFee, policyStats.vol))} a year after the {pct(ips.advisoryFee, 2)} advisory fee ({pct(policyStats.mean - ips.advisoryFee)} arithmetic mean), with {pct(policyStats.vol)} annual volatility.</p>
           </Article>
 
           <Article n="III" title="Risk tolerance">

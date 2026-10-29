@@ -27,7 +27,7 @@ export default function Rebalancing() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Sleeves outside band" value={String(r.breaches.length)} tone={r.breaches.length ? "neg" : "pos"} sub={r.breaches.length ? r.breaches.map((b) => CLASS_LABEL[b.cls]).join(", ") : "Every sleeve within its IPS range"} />
         <Stat label="Trades to target" value={money(r.turnover)} sub={`${pct(r.turnover / (v.policy || 1))} of the portfolio`} />
-        <Stat label="Estimated tax cost" value={money(r.tax)} sub={r.realized > 0 ? `${money(r.realized)} of realized gains, ${pct(r.tax / r.realized)} average federal rate` : `${money(r.realized)} of net realized gains`} tone={r.tax > 0 ? "warn" : undefined} />
+        <Stat label="Estimated tax cost" value={money(r.tax)} sub={r.realized >= 500 ? `${money(r.realized)} of realized gains, ${pct(r.tax / r.realized)} average federal rate` : `${money(r.realized)} of net realized gains`} tone={r.tax > 0 ? "warn" : undefined} />
         <Stat label="Asset location savings" value={`${money(loc.saving)}/yr`} sub="Estimated annual tax drag avoided" tone={loc.saving > 0 ? "pos" : undefined} />
       </div>
 

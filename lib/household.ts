@@ -28,7 +28,7 @@ export function inEstate(h: Household, entityId: string): boolean {
   if (e.type === "llc" && e.parent) return inEstate(h, e.parent);
   return IN_ESTATE[e.type];
 }
-const spendable = (h: Household, entityId: string): boolean => {
+export const spendable = (h: Household, entityId: string): boolean => {
   const e = h.entities.find((x) => x.id === entityId);
   return e ? (e.type === "llc" && e.parent ? spendable(h, e.parent) : FAMILY_SPENDABLE[e.type]) : true;
 };

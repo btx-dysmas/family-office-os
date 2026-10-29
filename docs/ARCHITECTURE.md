@@ -78,7 +78,7 @@ Every household page shares one memoized model (`lib/data.ts`, `app/households/[
 
 1. **Quotes.** Live prices for every holding (`/api/quotes`), falling back to the last known price stored with each holding so pages render instantly.
 2. **Valuation** (`value()`): positions at market; account totals; policy-portfolio weights across six asset classes; cash available to the family; liquid, illiquid and residential assets; debts; net worth; estate value; and ratios (debt to assets, months of cash, liquid assets to debt, illiquid share, savings rate).
-3. **Plan** (`buildPlan()`): a year-by-year list of cash flows (savings until retirement; the withdrawal that leaves retirement spending after federal tax on withdrawals, other income and taxable Social Security; education, home and purchase goals; life events) plus return assumptions from the IPS targets.
+3. **Plan** (`buildPlan()`): a year-by-year list of cash flows (savings until retirement; the withdrawal that leaves retirement spending after federal tax, with withdrawals taxed by account type, taxable Social Security, deductions for those 65 and older, required minimum distributions, survivor benefits and single filing after the first death; education, home and purchase goals; life events) plus return assumptions from the IPS targets.
 4. **Simulation** (`simulate()`): 5,000 Monte Carlo paths by default.
 
 ## 5. The IPS as executable policy

@@ -137,7 +137,7 @@ export default function Planning() {
             ["Extra savings to close the gap", gap.extraSavings ? `${usd(gap.extraSavings)}/yr` : "None needed"],
             ["Median real return assumed", pct(gap.rate, 2)],
           ]} />
-          <Note>&quot;Needed&quot; is the present value, at retirement, of every later withdrawal: the withdrawal that leaves planned spending after federal tax, with withdrawals and other income taxed as ordinary income and up to 85% of Social Security taxable, plus goals after retirement.</Note>
+          <Note>&quot;Needed&quot; is the present value, at retirement, of every later withdrawal: the withdrawal that leaves planned spending after federal tax, plus goals after retirement. Withdrawals come pro rata from the accounts: tax-deferred money is ordinary income, taxable accounts owe tax only on their gains and Roth money is tax-free. The tax also counts required minimum distributions, the extra deductions for anyone 65 or older and the taxable part of Social Security (up to 85%).</Note>
         </Panel>
 
         <Panel title="Withdrawal rate analysis" sub="Chance a fixed real withdrawal lasts, at the policy mix">

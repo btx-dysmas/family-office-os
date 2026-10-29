@@ -15,6 +15,19 @@ export const BRACKETS: Record<FilingStatus, Bracket[]> = {
 
 export const STANDARD_DEDUCTION: Record<FilingStatus, number> = { single: 16_100, mfj: 32_200, hoh: 24_150 };
 
+/**
+ * Deductions for taxpayers 65 and older, 2026. The additional standard deduction is per person. The OBBBA senior
+ * deduction is $6,000 per person for 2025 through 2028, reduced by 6% of modified AGI above the threshold.
+ */
+export const SENIOR = {
+  additional: { single: 2_050, mfj: 1_650, hoh: 2_050 } as Record<FilingStatus, number>,
+  bonus: 6_000, bonusRate: 0.06, bonusFrom: 2025, bonusTo: 2028,
+  bonusThreshold: { single: 75_000, mfj: 150_000, hoh: 75_000 } as Record<FilingStatus, number>,
+};
+
+/** Social Security taxation: provisional income thresholds for 50% and 85% inclusion (not indexed). */
+export const SS_TAX_THRESHOLDS: Record<FilingStatus, [number, number]> = { single: [25_000, 34_000], mfj: [32_000, 44_000], hoh: [25_000, 34_000] };
+
 /** Long-term capital gains and qualified dividends: top of the 0% and 15% brackets, by taxable income. */
 export const LTCG: Record<FilingStatus, [zeroTo: number, fifteenTo: number]> = {
   single: [49_450, 545_500],
@@ -47,7 +60,8 @@ export const rmdAge = (birthYear: number) => (birthYear >= 1960 ? 75 : 73);
 /** IRS Uniform Lifetime Table (excerpt): distribution period by age. */
 export const UNIFORM_LIFETIME: Record<number, number> = {
   73: 26.5, 74: 25.5, 75: 24.6, 76: 23.7, 77: 22.9, 78: 22.0, 79: 21.1, 80: 20.2, 81: 19.4, 82: 18.5, 83: 17.7, 84: 16.8, 85: 16.0,
-  86: 15.2, 87: 14.4, 88: 13.7, 89: 12.9, 90: 12.2, 91: 11.5, 92: 10.8, 93: 10.1, 94: 9.5, 95: 8.9,
+  86: 15.2, 87: 14.4, 88: 13.7, 89: 12.9, 90: 12.2, 91: 11.5, 92: 10.8, 93: 10.1, 94: 9.5, 95: 8.9, 96: 8.4, 97: 7.8, 98: 7.3,
+  99: 6.8, 100: 6.4, 101: 6.0, 102: 5.6, 103: 5.2, 104: 4.9, 105: 4.6,
 };
 
 export const SOURCES = [

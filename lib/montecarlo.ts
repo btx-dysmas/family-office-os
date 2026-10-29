@@ -1,10 +1,10 @@
 // Goal-based Monte Carlo. Everything runs in today's dollars: returns are drawn in nominal terms, then deflated.
-import { INFLATION, portfolioStats, type Weights } from "./cma";
+import { compound, INFLATION, portfolioStats, type Weights } from "./cma";
 import { thisYear } from "./format";
-import { clients, primary, retireYear, targetWeights, type Valuation } from "./household";
-import { COLLEGE_INFLATION, ESTATE } from "./reference";
-import { grossWithdrawal, socialSecurity } from "./tax";
-import type { Goal, Household, LifeEvent } from "./types";
+import { clients, primary, retireYear, spendable, targetWeights, type Valuation } from "./household";
+import { COLLEGE_INFLATION, ESTATE, rmdAge, UNIFORM_LIFETIME } from "./reference";
+import { grossWithdrawal, socialSecurity, type WithdrawalMix } from "./tax";
+import type { Goal, Household, LifeEvent, Person } from "./types";
 
 // Seeded generator so a plan gives the same answer every time it is opened.
 function mulberry32(seed: number) {
@@ -61,6 +61,31 @@ export function buildPlan(h: Household, v: Valuation, events: LifeEvent[] = h.ev
   const spendScale = (y: number) => (divorce && y >= divorce.year ? 0.65 : 1);
   const saveScale = (y: number) => (divorce && y >= divorce.year ? 0.5 : 1);
 
+  // Withdrawals are taken pro rata from the retirement accounts (529 plans are left for education): the tax-deferred
+  // share is ordinary income, the taxable share is taxed only on its embedded gain, and Roth money is tax-free.
+  const pool = v.accounts.filter((a) => spendable(h, a.entity) && h.entities.find((e) => e.id === a.entity)?.type !== "529");
+  const total = pool.reduce((s, a) => s + a.value, 0) || 1;
+  const taxablePos = v.positions.filter((p) => p.account.tax === "taxable" && pool.some((a) => a.id === p.account.id));
+  const taxableValue = taxablePos.reduce((s, p) => s + p.value, 0);
+  const gainRatio = taxableValue ? Math.max(0, taxablePos.reduce((s, p) => s + p.gain, 0) / taxableValue) : 0;
+  const mix: WithdrawalMix = {
+    deferred: pool.filter((a) => a.tax === "tax-deferred").reduce((s, a) => s + a.value, 0) / total,
+    gains: (taxableValue / total) * gainRatio,
+  };
+  const born = (p: Person) => Number(p.dob.slice(0, 4));
+  const alive = (p: Person, y: number) => y < born(p) + (p.planToAge ?? 95);
+  const benefit = (p: Person) => socialSecurity(p, people.find((x) => x.id !== p.id)).annual;
+
+  // Tax-deferred balances by owner, projected at the median real return, for required minimum distributions.
+  const ownerOf = (entity: string) => people.find((p) => p.name === h.entities.find((e) => e.id === entity)?.name) ?? me;
+  const iras = people.map((p) => ({ p, bal: pool.filter((a) => a.tax === "tax-deferred" && ownerOf(a.entity).id === p.id).reduce((s, a) => s + a.value, 0) }));
+  const growth = (1 + compound(s.mean - h.ips.advisoryFee, s.vol)) / (1 + INFLATION) - 1;
+  const rmdFor = (y: number) => iras.map(({ p, bal }) => {
+    // A surviving spouse rolls the IRA into their own and takes distributions on their own age.
+    const owner = alive(p, y) ? p : people.find((x) => x.id !== p.id && alive(x, y)) ?? p, age = y - born(owner);
+    return age >= rmdAge(born(owner)) ? bal / (UNIFORM_LIFETIME[Math.min(age, 105)] ?? 4.6) : 0;
+  });
+
   for (let y = start; y < start + years; y++) {
     if (y < retire) {
       let save = h.savings * saveScale(y);
@@ -71,13 +96,23 @@ export function buildPlan(h: Household, v: Valuation, events: LifeEvent[] = h.ev
       flows.push({ year: y, amount: save, label: "Savings", priority: 0 });
     } else {
       // Withdrawal that covers spending after Social Security and other income, and after federal tax on all of it.
-      const ss = people.reduce((sum, p) => {
-        const claimYear = Number(p.dob.slice(0, 4)) + (p.ssClaimAge ?? 67);
-        return sum + (y >= claimYear && !(divorce && y >= divorce.year && p.id !== me.id) ? socialSecurity(p, people.find((x) => x.id !== p.id)).annual : 0);
-      }, 0);
-      const gross = grossWithdrawal(h.retirementSpending * spendScale(y), ss, h.otherIncome, h.filing);
+      const divorced = !!divorce && y >= divorce.year;
+      const living = people.filter((p) => alive(p, y) && !(divorced && p.id !== me.id));
+      const claimed = (p: Person) => y >= born(p) + (p.ssClaimAge ?? 67);
+      let ss = living.reduce((sum, p) => sum + (claimed(p) ? benefit(p) : 0), 0);
+      // A surviving spouse keeps the larger of the two benefits, not both.
+      const late = people.find((p) => !alive(p, y) && !divorced);
+      if (late && living.length === 1 && claimed(living[0])) ss = Math.max(ss, benefit(late));
+      // The survivor files as single from the year after the death; a divorced client files as single at once.
+      const filing = people.length > 1 && living.length < people.length ? "single" : h.filing;
+      const seniors = living.filter((p) => y - born(p) >= 65).length;
+      const rmds = rmdFor(y), rmd = rmds.reduce((a, b) => a + b, 0);
+      const gross = grossWithdrawal(h.retirementSpending * spendScale(y), ss, h.otherIncome, { filing, seniors, year: y, mix, rmd });
+      const deferredBal = iras.reduce((a, x) => a + x.bal, 0) || 1;
+      iras.forEach((x, i) => (x.bal = Math.max(0, x.bal - Math.max(mix.deferred * gross * (x.bal / deferredBal), rmds[i]))));
       if (gross > 0) flows.push({ year: y, amount: -gross, label: "Retirement spending", goal: h.goals.find((g) => g.type === "retirement")?.id, priority: 1 });
     }
+    iras.forEach((x) => (x.bal *= 1 + growth));
   }
 
   const realCollege = (1 + COLLEGE_INFLATION) / (1 + INFLATION) - 1;
@@ -198,7 +233,7 @@ export function quantile(sorted: ArrayLike<number>, q: number) {
  * Median real return of the simulated lognormal, used by the deterministic projections:
  * the median of 1 + R is (1 + mean) / √(1 + (vol / (1 + mean))²), then deflated by inflation.
  */
-export const medianReal = (p: Plan) => (1 + p.mean) / Math.sqrt(1 + (p.vol / (1 + p.mean)) ** 2) / (1 + p.inflation) - 1;
+export const medianReal = (p: Plan) => (1 + compound(p.mean, p.vol)) / (1 + p.inflation) - 1;
 
 /** Probability that a portfolio sustains a fixed real withdrawal rate for `horizon` years at the given mix. */
 export function withdrawalSuccess(weights: Weights, fee: number, rate: number, horizon: number, runs = 1500) {

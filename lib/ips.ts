@@ -1,6 +1,6 @@
 // The investment policy statement as executable rules: compliance checks, rebalancing trades, asset location and
 // tax-loss harvesting all read their limits and targets from the household's IPS.
-import { CLASS_LABEL, CLASSES, CMA, HARVEST_PAIR, isFund, portfolioStats } from "./cma";
+import { CLASS_LABEL, CLASSES, CMA, compound, HARVEST_PAIR, isFund, portfolioStats } from "./cma";
 import { daysUntil, pct, sum } from "./format";
 import { drift, type Valuation } from "./household";
 import { gainsTax, householdRates, incomeTax } from "./tax";
@@ -32,8 +32,9 @@ export function compliance(h: Household, v: Valuation, stressLoss?: number | nul
   out.push({ area: "Liquidity", rule: `Cash reserve of at least ${h.ips.liquidityMonths} months of spending`, actual: `${v.ratios.liquidityMonths.toFixed(1)} months`, status: v.ratios.liquidityMonths < h.ips.liquidityMonths * 0.75 ? "Breach" : v.ratios.liquidityMonths < h.ips.liquidityMonths ? "Watch" : "Compliant" });
   out.push({ area: "Liquidity", rule: `Illiquid investments at most ${pct(L.maxIlliquid, 0)} of investable net worth`, actual: pct(v.ratios.illiquidShare), status: v.ratios.illiquidShare > L.maxIlliquid ? "Breach" : v.ratios.illiquidShare > L.maxIlliquid * 0.9 ? "Watch" : "Compliant" });
 
-  const expected = stats.mean - h.ips.advisoryFee;
-  out.push({ area: "Return", rule: `Expected return after fees of at least ${pct(h.ips.returnTarget)}`, actual: pct(expected), status: expected < h.ips.returnTarget - 0.005 ? "Watch" : "Compliant", detail: "A shortfall here is a planning signal, not a trading trigger." });
+  // A return target is a compound rate, so compare the median (geometric) return, not the arithmetic mean.
+  const expected = compound(stats.mean - h.ips.advisoryFee, stats.vol);
+  out.push({ area: "Return", rule: `Compound expected return after fees of at least ${pct(h.ips.returnTarget)}`, actual: pct(expected), status: expected < h.ips.returnTarget - 0.005 ? "Watch" : "Compliant", detail: "A shortfall here is a planning signal, not a trading trigger." });
   const since = -daysUntil(h.ips.lastReview);
   out.push({ area: "Governance", rule: "Policy reviewed within the last 12 months", actual: `${Math.round(since / 30.4)} months ago`, status: since > 365 ? "Breach" : since > 300 ? "Watch" : "Compliant" });
   return out;

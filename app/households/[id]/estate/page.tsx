@@ -82,7 +82,7 @@ export default function Estate() {
               ))}
             </tbody>
           </table>
-          <div className="px-5 pb-4"><Note>Projection grows the estate at the plan&apos;s median real return until the later of the two planning ages and holds the exclusion constant in real terms (it is indexed to inflation from 2027). Spending during retirement is not deducted here; see the goal plan for that. State estate taxes, such as Connecticut&apos;s, are not modeled.</Note></div>
+          <div className="px-5 pb-4"><Note>Projection grows the estate at the plan&apos;s median real return until the later of the two planning ages and holds the exclusion constant in real terms (it is indexed to inflation from 2027). Savings, retirement spending (after tax) and goals follow the same year-by-year cash flows as the goal plan, at its median return. State estate taxes, such as Connecticut&apos;s, are not modeled.</Note></div>
         </Panel>
 
         <Panel title="Beneficiaries and vehicles">

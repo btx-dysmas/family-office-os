@@ -89,6 +89,8 @@ export function estate(h: Household, v: Valuation, plan: Plan, o: { giftingYears
     // Existing family trusts and custodial gifts already sit outside the estate; charitable vehicles do not go to heirs.
     let inside = v.estate - trust - giftTax, outside = v.netWorth - v.estate - v.charitable + trust;
     for (let y = 0; y < years; y++) {
+      // Savings, after-tax retirement spending and goals from the plan come out of the estate first.
+      inside = Math.max(0, inside + sum(plan.flows.filter((f) => f.year === plan.start + y).map((f) => f.amount)));
       const g = y < giftYears ? Math.min(gift, inside) : 0;
       inside = (inside - g) * (1 + r);
       outside = (outside + g) * (1 + r);
