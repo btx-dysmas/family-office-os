@@ -12,7 +12,7 @@ export type Intake = {
   homeGoal?: { year: number; amount: number };
 };
 
-/** Seed holdings at a nominal $1 price per share; live quotes revalue them on first load. */
+/** Seed holdings at the latest prices passed in ($100 a share if none); live quotes revalue them on first load. */
 const mix = (amount: number, profile: RiskProfile, prices: Record<string, number>): Holding[] =>
   CLASSES.filter((c) => c !== "cash" && MODEL[profile][c] > 0).map((c) => {
     const symbol = CMA[c].model, value = (amount * MODEL[profile][c]) / (1 - MODEL[profile].cash), price = prices[symbol] ?? 100;

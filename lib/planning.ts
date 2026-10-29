@@ -72,7 +72,7 @@ export function affordability(o: { income: number; monthlyDebts: number; rate: n
 export function estate(h: Household, v: Valuation, plan: Plan, o: { giftingYears?: number; donees?: number; charitable?: number; trustTransfer?: number } = {}) {
   const r = medianReal(plan);
   const people = clients(h);
-  const deathYear = Math.max(...people.map((p) => Number(p.dob.slice(0, 4)) + (p.planToAge ?? 92)));
+  const deathYear = Math.max(...people.map((p) => Number(p.dob.slice(0, 4)) + (p.planToAge ?? 95)));
   const years = Math.max(0, deathYear - thisYear());
   const married = people.length > 1 && h.marital === "Married";
   const exclusion = ESTATE.exclusion * (married ? 2 : 1);

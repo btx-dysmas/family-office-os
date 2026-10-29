@@ -2,7 +2,7 @@
 import { INFLATION, portfolioStats, type Weights } from "./cma";
 import { thisYear } from "./format";
 import { clients, primary, retireYear, targetWeights, type Valuation } from "./household";
-import { COLLEGE_INFLATION } from "./reference";
+import { COLLEGE_INFLATION, ESTATE } from "./reference";
 import { grossWithdrawal, socialSecurity } from "./tax";
 import type { Goal, Household, LifeEvent } from "./types";
 
@@ -39,6 +39,9 @@ export type Plan = {
   legacy?: Goal;
   /** Net worth outside the spendable portfolio that also passes to heirs (property, private holdings, family trusts), held flat in real terms. */
   heirAssets: number;
+  /** Part of heirAssets inside the taxable estate, and the estate tax exclusion still available. */
+  heirTaxable: number;
+  exclusion: number;
   retirementGoal?: string;
   shocks: Record<number, { forced?: number; realDrag?: number; haircut?: number }>;
   retireYear: number;
@@ -105,7 +108,8 @@ export function buildPlan(h: Household, v: Valuation, events: LifeEvent[] = h.ev
 
   return {
     start, years, wealth: v.investable, weights: w, mean: s.mean - h.ips.advisoryFee, vol: s.vol, inflation: INFLATION, flows,
-    legacy: h.goals.find((g) => g.type === "legacy"), heirAssets: v.netWorth - v.investable - v.charitable, retirementGoal: h.goals.find((g) => g.type === "retirement")?.id, shocks, retireYear: retire,
+    legacy: h.goals.find((g) => g.type === "legacy"), heirAssets: v.netWorth - v.investable - v.charitable,
+    heirTaxable: Math.max(0, v.estate - v.investable), exclusion: Math.max(0, ESTATE.exclusion * (people.length > 1 && h.marital === "Married" ? 2 : 1) - (h.exemptionUsed ?? 0)), retirementGoal: h.goals.find((g) => g.type === "retirement")?.id, shocks, retireYear: retire,
   };
 }
 
@@ -151,7 +155,9 @@ export function simulate(plan: Plan, runs = 5000, seed = 11) {
       paths[k + 1][n] = w;
     }
     goalIds.forEach((g) => !failed.has(g) && wins.set(g, wins.get(g)! + 1));
-    if (plan.legacy && w + plan.heirAssets >= plan.legacy.amount) legacyWins++;
+    // Heirs receive what is left after 40% estate tax on the taxable estate above the remaining exclusion.
+    const estateTax = ESTATE.rate * Math.max(0, w + plan.heirTaxable - plan.exclusion);
+    if (plan.legacy && w + plan.heirAssets - estateTax >= plan.legacy.amount) legacyWins++;
     if (depleted != null) depletedAt.push(depleted);
     ending[n] = w;
   }
@@ -198,7 +204,7 @@ export const medianReal = (p: Plan) => (1 + p.mean) / Math.sqrt(1 + (p.vol / (1 
 export function withdrawalSuccess(weights: Weights, fee: number, rate: number, horizon: number, runs = 1500) {
   const s = portfolioStats(weights);
   const plan: Plan = {
-    start: 0, years: horizon, wealth: 1, heirAssets: 0, weights, mean: s.mean - fee, vol: s.vol, inflation: INFLATION, shocks: {}, retireYear: 0,
+    start: 0, years: horizon, wealth: 1, heirAssets: 0, heirTaxable: 0, exclusion: Infinity, weights, mean: s.mean - fee, vol: s.vol, inflation: INFLATION, shocks: {}, retireYear: 0,
     flows: Array.from({ length: horizon }, (_, y) => ({ year: y, amount: -rate, label: "Retirement spending", goal: "r", priority: 1 })), retirementGoal: "r",
   };
   return simulate(plan, runs, 3).success;
