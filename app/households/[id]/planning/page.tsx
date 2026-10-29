@@ -141,7 +141,7 @@ export default function Planning() {
         </Panel>
 
         <Panel title="Withdrawal rate analysis" sub="Chance a fixed real withdrawal lasts, at the policy mix">
-          <table className="grid-table">
+          <div className="overflow-x-auto"><table className="grid-table compact">
             <thead><tr><th>Rate</th>{wr.horizons.map((n) => <th key={n} className="r">{n} yrs</th>)}</tr></thead>
             <tbody>
               {wr.rates.map((r, i) => (
@@ -151,12 +151,12 @@ export default function Planning() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
           <Note>Green is 90% or better. The household&apos;s planned first-year rate is {gap.withdrawalRate != null ? pct(gap.withdrawalRate) : "not yet known"}; sustainable spending is the highest rate that stays green for the retirement length ({plan.years - planYears} years).</Note>
         </Panel>
 
         <Panel title="Social Security" sub="2026 benefit formula, estimated from current earnings">
-          <table className="grid-table">
+          <table className="grid-table compact">
             <thead><tr><th>Person</th><th className="r">PIA / mo</th><th className="r">Claim age</th><th className="r">Annual benefit</th></tr></thead>
             <tbody>
               {ss.map(({ p, pia, annual, claimAge, factor }) => (

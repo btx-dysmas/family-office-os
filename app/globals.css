@@ -170,6 +170,10 @@
   .grid-table td {
     @apply border-b border-border/60 px-3 py-2.5 align-middle;
   }
+  .grid-table.compact th,
+  .grid-table.compact td {
+    @apply px-2;
+  }
   .grid-table tbody tr:last-child td {
     @apply border-b-0;
   }
