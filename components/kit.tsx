@@ -54,7 +54,7 @@ export function Ring({ value, size = 64, color }: { value: number; size?: number
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${(v * 100).toFixed(1)}%`} className="shrink-0">
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--muted)" strokeWidth="5" />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={col} strokeWidth="5" strokeLinecap="round" strokeDasharray={`${v * c} ${c}`} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="var(--foreground)" fontSize={size * 0.22} fontWeight={600} className="num">{v >= 0.9995 ? ">99.9" : (v * 100).toFixed(1)}%</text>
+      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill="var(--foreground)" fontSize={size * (v >= 0.9995 ? 0.18 : 0.22)} fontWeight={600} className="num">{v >= 0.9995 ? ">99.9" : (v * 100).toFixed(1)}%</text>
     </svg>
   );
 }

@@ -125,24 +125,24 @@ const BOOK: Household[] = [
     riskAnswers: { experience: 3, knowledge: 2, horizon: 2, drawdown: 1, reaction: 2, goal: 1, income: 2, liquidity: 3 },
     preferences: ["Quarterly in-person reviews in Greenwich", "Philanthropy: early-childhood education and ocean conservation", "Excludes tobacco and firearms", "Prefers written summaries before meetings", "Coordinate with estate attorney (Morgan & Pell LLP) and CPA"],
     notes: [
-      { id: "n1", date: "2026-09-08", category: "Call", summary: "Richard confirmed he will step down from two boards at the end of 2027. Wants to model retiring in 2027 instead of 2028.", author: "Noah Williams" },
+      { id: "n1", date: "2026-10-14", category: "Call", summary: "Richard confirmed he will step down from two boards at the end of 2027. Wants to model retiring in 2027 instead of 2028.", author: "Noah Williams" },
       { id: "n2", date: "2026-08-14", category: "Recommendation", summary: "Recommended a staged diversification of AAPL and MSFT over three tax years, pairing sales with harvested losses in the municipal bond sleeve.", author: "Noah Williams" },
       { id: "n3", date: "2026-06-19", category: "Meeting", summary: "Q2 review. Discussed funding the foundation's 2026 grants, Caroline's interest in joining the foundation board, and the Nantucket renovation budget.", author: "Noah Williams" },
       { id: "n4", date: "2026-05-02", category: "Follow-up", summary: "Sent updated beneficiary designation forms for the IRAs after the estate attorney's review.", author: "Noah Williams" },
     ],
     tasks: [
-      { id: "t1", title: "Model a 2027 retirement date and share the plan comparison", due: "2026-10-03", done: false, priority: "High" },
-      { id: "t2", title: "Confirm $1.2M private equity capital call schedule with fund administrator", due: "2026-10-15", done: false, priority: "Normal" },
-      { id: "t3", title: "Prepare foundation 5% distribution estimate for 2026", due: "2026-11-01", done: false, priority: "Normal" },
+      { id: "t1", title: "Model a 2027 retirement date and share the plan comparison", due: "2026-11-06", done: false, priority: "High" },
+      { id: "t2", title: "Confirm $1.2M private equity capital call schedule with fund administrator", due: "2026-11-20", done: false, priority: "Normal" },
+      { id: "t3", title: "Prepare foundation 5% distribution estimate for 2026", due: "2026-12-01", done: false, priority: "Normal" },
     ],
     documents: [
-      { id: "d1", name: "IPS amendment: 2027 retirement date scenario", status: "Awaiting signature", date: "2026-09-12" },
+      { id: "d1", name: "IPS amendment: 2027 retirement date scenario", status: "Awaiting signature", date: "2026-10-16" },
       { id: "d2", name: "Updated IRA beneficiary designations", status: "Signed", date: "2026-05-09" },
       { id: "d3", name: "Revocable trust restatement (Morgan & Pell)", status: "Review due", date: "2021-04-30" },
     ],
     exemptionUsed: 5_000_000, // 2021 gifts to the dynasty trust, split between both spouses
     beneficiaryReview: "2026-05-09",
-    nextMeeting: "2026-10-09",
+    nextMeeting: "2026-11-12",
     lastReview: { date: "2026-06-19", probability: 0.9, netWorth: 58_000_000 },
   },
   {
@@ -201,20 +201,20 @@ const BOOK: Household[] = [
     riskAnswers: { experience: 2, knowledge: 2, horizon: 3, drawdown: 3, reaction: 2, goal: 3, income: 3, liquidity: 2 },
     preferences: ["Evening video calls after the kids are asleep", "Wants a written plan for reducing NVDA below 10%", "Interested in ESG screens", "Dislikes long reports: one-page summaries"],
     notes: [
-      { id: "n1", date: "2026-09-18", category: "Email", summary: "Michael asked whether to sell NVDA before the next vest. Replied with the staged diversification plan and tax estimate.", author: "Noah Williams" },
+      { id: "n1", date: "2026-10-21", category: "Email", summary: "Michael asked whether to sell NVDA before the next vest. Replied with the staged diversification plan and tax estimate.", author: "Noah Williams" },
       { id: "n2", date: "2026-07-22", category: "Meeting", summary: "Mid-year review. Agreed to a 10% single-stock limit in the IPS and to sell 25% of NVDA per quarter. Discussed Tahoe budget.", author: "Noah Williams" },
       { id: "n3", date: "2026-07-22", category: "Recommendation", summary: "Increase 529 contributions to $40,000/year each using the five-year gift election for Mateo.", author: "Noah Williams" },
     ],
     tasks: [
-      { id: "t1", title: "Execute Q4 NVDA diversification tranche", due: "2026-10-20", done: false, priority: "High" },
+      { id: "t1", title: "Execute Q4 NVDA diversification tranche", due: "2026-11-18", done: false, priority: "High" },
       { id: "t2", title: "Send backdoor Roth instructions for 2026", due: "2026-12-01", done: false, priority: "Normal" },
     ],
     documents: [
-      { id: "d1", name: "10b5-1 trading plan for NVDA sales", status: "Awaiting signature", date: "2026-09-18" },
+      { id: "d1", name: "10b5-1 trading plan for NVDA sales", status: "Awaiting signature", date: "2026-10-21" },
       { id: "d2", name: "Investment policy statement (10% single-stock limit)", status: "Signed", date: "2026-07-24" },
     ],
     beneficiaryReview: "2022-03-01",
-    nextMeeting: "2026-10-22",
+    nextMeeting: "2026-11-19",
     lastReview: { date: "2026-07-22", probability: 0.81, netWorth: 5_000_000 },
   },
   {

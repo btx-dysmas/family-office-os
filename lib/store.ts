@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { SEED } from "./seed";
 import type { Household } from "./types";
 
-const KEY = "fos:book:v3"; // bumped when the demo data model gains fields
+const KEY = "fos:book:v4"; // bumped when the demo data model gains fields
 const WATCH_KEY = "fos:watch:v1";
 export const DEFAULT_WATCH = ["VOO", "VTI", "SCHD", "QQQ", "BND", "VXUS", "TLT", "GLD", "NVDA", "AAPL", "MSFT", "JPM"];
 
