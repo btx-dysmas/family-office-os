@@ -23,7 +23,7 @@ export default function Estate() {
   const heirsNet = s.toHeirs - s.outsideEstate;
   const each = direct.length ? 1 / direct.length : 1;
   const links = [
-    { s: 0, t: 2, v: s.tax, color: "rgba(239,107,107,0.35)" },
+    { s: 0, t: 2, v: s.federalTax + s.stateTax, color: "rgba(239,107,107,0.35)" },
     { s: 0, t: 3, v: s.toCharity, color: "rgba(165,139,234,0.35)" },
     ...direct.map((_, i) => ({ s: 0, t: 4 + i, v: heirsNet * each, color: "rgba(111,156,246,0.28)" })),
     ...direct.map((_, i) => ({ s: 1, t: 4 + i, v: s.outsideEstate * each, color: "rgba(214,182,118,0.3)" })),
@@ -40,7 +40,7 @@ export default function Estate() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Taxable estate today" value={money(v.estate)} sub={`${money(e.excluded)} already outside the estate`} />
         <Stat label="Federal exclusion" value={money(e.exclusion - e.used)} sub={`${e.married ? "Two exclusions of $15M with portability" : "One $15M exclusion"}${e.used ? `, less ${money(e.used)} used by earlier gifts` : ""}`} />
-        <Stat label="Projected estate tax" value={money(b.tax)} tone={b.tax > 0 ? "neg" : "pos"} sub={`At the second death, ${e.deathYear}, with no planning`} />
+        <Stat label="Projected estate tax" value={money(b.tax)} tone={b.tax > 0 ? "neg" : "pos"} sub={`At the second death, ${e.deathYear}, with no planning${b.stateTax ? `; ${money(b.federalTax)} federal, ${money(b.stateTax)} state` : ""}`} />
         <Stat label="Tax saved by strategy" value={money(b.tax - s.tax)} tone={b.tax - s.tax > 0 ? "pos" : undefined} sub={s.toHeirs >= b.toHeirs ? `Heirs receive ${money(s.toHeirs - b.toHeirs)} more` : `Heirs receive ${money(b.toHeirs - s.toHeirs)} less; charity receives ${money(s.toCharity)}`} />
       </div>
 
@@ -73,16 +73,16 @@ export default function Estate() {
             <tbody>
               {([
                 ["Estate at death", b.gross, s.gross], ["Charitable bequests", b.toCharity, s.toCharity], ["Taxable estate", b.taxable, s.taxable],
-                ["Federal estate tax", b.tax, s.tax], ["Assets outside the estate", b.outsideEstate, s.outsideEstate], ["Total to heirs", b.toHeirs, s.toHeirs],
+                ["Federal estate tax", b.federalTax, s.federalTax], ["State estate tax", b.stateTax, s.stateTax], ...(s.giftTax ? [["Gift tax on the trust transfer", b.giftTax, s.giftTax] as const] : []), ["Assets outside the estate", b.outsideEstate, s.outsideEstate], ["Total to heirs", b.toHeirs, s.toHeirs],
               ] as const).map(([k, x, y]) => (
                 <tr key={k} className={k === "Total to heirs" ? "font-semibold" : ""}>
                   <td>{k}</td><td className="r">{money(x)}</td><td className="r">{money(y)}</td>
-                  <td className={`r ${k === "Federal estate tax" ? (y < x ? "text-pos" : "") : y > x ? "text-pos" : y < x ? "text-neg" : "text-muted-foreground"}`}>{y - x >= 0 ? "+" : ""}{money(y - x)}</td>
+                  <td className={`r ${/tax/i.test(k) ? (y < x ? "text-pos" : "") : y > x ? "text-pos" : y < x ? "text-neg" : "text-muted-foreground"}`}>{y - x >= 0 ? "+" : ""}{money(y - x)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="px-5 pb-4"><Note>Projection grows the estate at the plan&apos;s median real return until the later of the two planning ages and holds the exclusion constant in real terms (it is indexed to inflation from 2027). Savings, retirement spending (after tax) and goals follow the same year-by-year cash flows as the goal plan, at its median return. State estate taxes, such as Connecticut&apos;s, are not modeled.</Note></div>
+          <div className="px-5 pb-4"><Note>Projection grows the estate at the plan&apos;s median real return until the later of the two planning ages and holds the exclusion constant in real terms (it is indexed to inflation from 2027). Savings, retirement spending (after tax) and goals follow the same year-by-year cash flows as the goal plan, at its median return. Connecticut estate tax is 12% above a $15M exemption that cannot be shared between spouses, capped at $15M, and is deducted before federal tax; other states&apos; estate and inheritance taxes are not modeled.</Note></div>
         </Panel>
 
         <Panel title="Beneficiaries and vehicles">

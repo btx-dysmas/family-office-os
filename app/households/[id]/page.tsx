@@ -278,7 +278,7 @@ export default function Overview() {
               ["Inside the taxable estate", money(v.estate)],
               ["Already outside the estate", money(est.excluded)],
               [`Projected estate at ${est.deathYear}`, money(est.baseline.gross)],
-              ["Federal estate tax, no planning", est.baseline.tax ? <span key="t" className="text-neg">{money(est.baseline.tax)}</span> : "None"],
+              ["Estate tax, no planning", est.baseline.tax ? <span key="t" className="text-neg">{money(est.baseline.tax)}</span> : "None"],
               ["Heirs named", String(h.people.filter((p) => ["child", "grandchild", "other"].includes(p.relationship)).length)],
             ] as const).map(([k, val]) => <div key={k} className="flex justify-between gap-4 py-2"><dt className="text-muted-foreground">{k}</dt><dd className="num">{val}</dd></div>)}
           </dl>

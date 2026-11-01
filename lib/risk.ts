@@ -57,7 +57,7 @@ export function heatMap(h: Household, v: Valuation, o: { retirementProbability?:
   const top = v.policy ? topVal / v.policy : 0;
   const yrs = yearsToRetire(h), equity = w.us + w.intl;
   const variable = h.liabilities.filter((l) => l.kind === "credit-line").reduce((s, l) => s + l.balance, 0);
-  const exclusion = ESTATE.exclusion * (h.marital === "Married" ? 2 : 1);
+  const exclusion = Math.max(1, ESTATE.exclusion * (h.marital === "Married" ? 2 : 1) - (h.exemptionUsed ?? 0));
   const cpi = o.cpi ?? 3;
 
   return [

@@ -27,7 +27,7 @@ export function attention(h: Household, v: Valuation, o: { checks: Check[]; plan
   if (h.beneficiaryReview && -daysUntil(h.beneficiaryReview) > 3 * 365)
     out.push({ severity: "medium", title: "Beneficiary designations not reviewed in over 3 years", detail: `Last confirmed ${h.beneficiaryReview}`, tab: "estate" });
 
-  if (o.estateTax && o.estateTax > 0) out.push({ severity: "medium", title: `Projected federal estate tax of ${money(o.estateTax)}`, detail: "Before any gifting or trust strategy", tab: "estate" });
+  if (o.estateTax && o.estateTax > 0) out.push({ severity: "medium", title: `Projected estate tax of ${money(o.estateTax)}`, detail: "Before any gifting or trust strategy", tab: "estate" });
 
   // Liquidity events in the next 24 months, other than regular savings and retirement spending.
   const soon = o.plan.flows.filter((f) => f.amount < 0 && f.label !== "Retirement spending" && f.year <= thisYear() + 2);

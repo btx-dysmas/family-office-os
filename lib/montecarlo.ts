@@ -3,7 +3,7 @@ import { compound, INFLATION, portfolioStats, type Weights } from "./cma";
 import { thisYear } from "./format";
 import { clients, primary, retireYear, spendable, targetWeights, type Valuation } from "./household";
 import { COLLEGE_INFLATION, ESTATE, rmdAge, UNIFORM_LIFETIME } from "./reference";
-import { grossWithdrawal, socialSecurity, type WithdrawalMix } from "./tax";
+import { estateTaxes, grossWithdrawal, socialSecurity, type WithdrawalMix } from "./tax";
 import type { Goal, Household, LifeEvent, Person } from "./types";
 
 // Seeded generator so a plan gives the same answer every time it is opened.
@@ -42,6 +42,8 @@ export type Plan = {
   /** Part of heirAssets inside the taxable estate, and the estate tax exclusion still available. */
   heirTaxable: number;
   exclusion: number;
+  state: string;
+  taxableGifts: number;
   retirementGoal?: string;
   shocks: Record<number, { forced?: number; realDrag?: number; haircut?: number }>;
   retireYear: number;
@@ -144,6 +146,7 @@ export function buildPlan(h: Household, v: Valuation, events: LifeEvent[] = h.ev
   return {
     start, years, wealth: v.investable, weights: w, mean: s.mean - h.ips.advisoryFee, vol: s.vol, inflation: INFLATION, flows,
     legacy: h.goals.find((g) => g.type === "legacy"), heirAssets: v.netWorth - v.investable - v.charitable,
+    state: h.state, taxableGifts: h.exemptionUsed ?? 0,
     heirTaxable: Math.max(0, v.estate - v.investable), exclusion: Math.max(0, ESTATE.exclusion * (people.length > 1 && h.marital === "Married" ? 2 : 1) - (h.exemptionUsed ?? 0)), retirementGoal: h.goals.find((g) => g.type === "retirement")?.id, shocks, retireYear: retire,
   };
 }
@@ -153,6 +156,7 @@ export type Result = ReturnType<typeof simulate>;
 export function simulate(plan: Plan, runs = 5000, seed = 11) {
   const { start, years, mean, vol, inflation } = plan;
   const rand = gaussian(mulberry32(seed));
+  const heirGrowth = (1 + medianReal(plan)) ** years;
   // Lognormal with the requested arithmetic mean and volatility.
   const s2 = Math.log(1 + (vol / (1 + mean)) ** 2), mu = Math.log(1 + mean) - s2 / 2, sd = Math.sqrt(s2);
 
@@ -190,9 +194,11 @@ export function simulate(plan: Plan, runs = 5000, seed = 11) {
       paths[k + 1][n] = w;
     }
     goalIds.forEach((g) => !failed.has(g) && wins.set(g, wins.get(g)! + 1));
-    // Heirs receive what is left after 40% estate tax on the taxable estate above the remaining exclusion.
-    const estateTax = ESTATE.rate * Math.max(0, w + plan.heirTaxable - plan.exclusion);
-    if (plan.legacy && w + plan.heirAssets - estateTax >= plan.legacy.amount) legacyWins++;
+    // Heirs receive what is left after federal and state estate tax. Assets outside the portfolio grow at the plan's
+    // median real return, as on the wealth transfer page.
+    const later = heirGrowth;
+    const estateTax = estateTaxes(w + plan.heirTaxable * later, plan.exclusion, plan.state, plan.taxableGifts).total;
+    if (plan.legacy && w + plan.heirAssets * later - estateTax >= plan.legacy.amount) legacyWins++;
     if (depleted != null) depletedAt.push(depleted);
     ending[n] = w;
   }
@@ -239,7 +245,7 @@ export const medianReal = (p: Plan) => (1 + compound(p.mean, p.vol)) / (1 + p.in
 export function withdrawalSuccess(weights: Weights, fee: number, rate: number, horizon: number, runs = 1500) {
   const s = portfolioStats(weights);
   const plan: Plan = {
-    start: 0, years: horizon, wealth: 1, heirAssets: 0, heirTaxable: 0, exclusion: Infinity, weights, mean: s.mean - fee, vol: s.vol, inflation: INFLATION, shocks: {}, retireYear: 0,
+    start: 0, years: horizon, wealth: 1, heirAssets: 0, heirTaxable: 0, exclusion: Infinity, state: "", taxableGifts: 0, weights, mean: s.mean - fee, vol: s.vol, inflation: INFLATION, shocks: {}, retireYear: 0,
     flows: Array.from({ length: horizon }, (_, y) => ({ year: y, amount: -rate, label: "Retirement spending", goal: "r", priority: 1 })), retirementGoal: "r",
   };
   return simulate(plan, runs, 3).success;

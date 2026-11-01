@@ -44,6 +44,14 @@ export const LIMITS = { k401: 24_500, k401CatchUp: 8_000, k401CatchUp60to63: 11_
 /** Estate and gift tax, 2026. The basic exclusion is $15M per person and is indexed for inflation from 2027. */
 export const ESTATE = { exclusion: 15_000_000, annualGift: 19_000, rate: 0.4 };
 
+/**
+ * State estate taxes for the states in the book, 2026. Connecticut: 12% flat above an exemption equal to the federal basic
+ * exclusion, with no portability between spouses, lifetime taxable gifts counted against it, and the tax capped at $15M.
+ */
+export const STATE_ESTATE: Record<string, { exemption: number; rate: number; cap: number }> = {
+  CT: { exemption: 15_000_000, rate: 0.12, cap: 15_000_000 },
+};
+
 /** Social Security, 2026 (SSA). PIA = 90% of AIME up to the first bend point, 32% to the second, 15% above. */
 export const SSA = { bend1: 1_286, bend2: 7_749, wageBase: 184_500, cola: 0.028, fullRetirementAge: 67 };
 

@@ -4,6 +4,7 @@ import { sum, thisYear } from "./format";
 import { clients, type Valuation } from "./household";
 import { medianReal, type Plan } from "./montecarlo";
 import { COLLEGE_INFLATION, ESTATE, LIVING_COST_ASSUMPTION, TUITION, type CollegeType } from "./reference";
+import { estateTaxes } from "./tax";
 import type { Household } from "./types";
 
 /**
@@ -96,9 +97,9 @@ export function estate(h: Household, v: Valuation, plan: Plan, o: { giftingYears
       outside = (outside + g) * (1 + r);
     }
     const toCharity = inside * charity;
-    const taxable = Math.max(0, inside - toCharity - remaining);
-    const tax = taxable * ESTATE.rate + giftTax;
-    return { gross: inside, toCharity, taxable, tax, giftTax, toHeirs: inside - toCharity - taxable * ESTATE.rate + outside, outsideEstate: outside };
+    const t = estateTaxes(inside - toCharity, remaining, h.state, used + trust);
+    const taxable = Math.max(0, inside - toCharity - t.state - remaining);
+    return { gross: inside, toCharity, taxable, federalTax: t.federal, stateTax: t.state, tax: t.total + giftTax, giftTax, toHeirs: inside - toCharity - t.total + outside, outsideEstate: outside };
   };
   const annual = ESTATE.annualGift * donors * (o.donees ?? 0);
   const baseline = run(0, 0, 0, 0);

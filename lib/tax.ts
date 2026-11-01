@@ -1,5 +1,5 @@
 // Federal income tax, capital gains rates and Social Security benefits under 2026 rules.
-import { BRACKETS, LTCG, NIIT, SENIOR, SS_TAX_THRESHOLDS, SSA, STANDARD_DEDUCTION } from "./reference";
+import { BRACKETS, ESTATE, LTCG, NIIT, SENIOR, SS_TAX_THRESHOLDS, SSA, STANDARD_DEDUCTION, STATE_ESTATE } from "./reference";
 import type { FilingStatus, Household, Person } from "./types";
 
 /** Tax on ordinary taxable income (after deductions), with the marginal rate. */
@@ -99,6 +99,17 @@ export function taxableBenefits(benefits: number, otherIncome: number, filing: F
   if (provisional <= base) return 0;
   if (provisional <= adjusted) return Math.min(benefits / 2, (provisional - base) / 2);
   return Math.min(0.85 * benefits, 0.85 * (provisional - adjusted) + Math.min(benefits / 2, (adjusted - base) / 2));
+}
+
+/**
+ * Estate taxes at death on a taxable estate (after charitable bequests). State tax is computed first on the state's own
+ * exemption; it is deductible for federal purposes, and federal tax is 40% above the remaining federal exclusion.
+ */
+export function estateTaxes(taxableEstate: number, federalLeft: number, state: string, taxableGifts: number) {
+  const st = STATE_ESTATE[state];
+  const stateTax = st ? Math.min(st.cap, st.rate * Math.max(0, taxableEstate - Math.max(0, st.exemption - taxableGifts))) : 0;
+  const federal = ESTATE.rate * Math.max(0, taxableEstate - stateTax - federalLeft);
+  return { state: stateTax, federal, total: stateTax + federal };
 }
 
 /** Standard deduction including the additional amount and the 2025–2028 senior deduction for each person 65 or older. */
