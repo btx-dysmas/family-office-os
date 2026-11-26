@@ -272,5 +272,5 @@ Family Office OS is an educational project. Households are fictional, and projec
 
 ## Author
 
-**Dysmas Anastasiou**
+**Noah Williams** (Dysmas Anastasiou)
 Email: noah.w.williams@protonmail.com
