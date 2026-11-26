@@ -2,10 +2,10 @@
 // Client-side book of business. Households live in the browser (localStorage) so the app needs no database;
 // "Reset demo data" restores the seeded households; "Start empty book" removes them.
 import { useSyncExternalStore } from "react";
-import { SEED } from "./seed";
+import { freshSeed, SEED } from "./seed";
 import type { Household } from "./types";
 
-const KEY = "fos:book:v4"; // bumped when the demo data model gains fields
+const KEY = "fos:book:v5"; // bumped when the demo data model gains fields
 const WATCH_KEY = "fos:watch:v1";
 export const DEFAULT_WATCH = ["VOO", "VTI", "SCHD", "QQQ", "BND", "VXUS", "TLT", "GLD", "NVDA", "AAPL", "MSFT", "JPM"];
 
@@ -19,7 +19,7 @@ function load() {
   loaded = true;
   try {
     const h = localStorage.getItem(KEY), w = localStorage.getItem(WATCH_KEY);
-    state = { households: h ? JSON.parse(h) : SEED, watch: w ? JSON.parse(w) : DEFAULT_WATCH };
+    state = { households: h ? JSON.parse(h) : freshSeed(), watch: w ? JSON.parse(w) : DEFAULT_WATCH };
   } catch {
     /* private mode or corrupted storage: fall back to the seed */
   }
@@ -69,6 +69,6 @@ export const actions = {
     set({ households: [] });
   },
   reset() {
-    set({ households: SEED, watch: DEFAULT_WATCH });
+    set({ households: freshSeed(), watch: DEFAULT_WATCH });
   },
 };

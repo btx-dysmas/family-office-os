@@ -350,3 +350,24 @@ const BOOK: Household[] = [
 
 /** Every account gets a statement date: yesterday's close for brokerage feeds, month or quarter end for trusts and plans. */
 export const SEED: Household[] = BOOK.map((h) => ({ ...h, accounts: h.accounts.map((a) => ({ ...a, asOf: a.asOf ?? STATEMENT_LAG[a.id] ?? "2026-09-25" })) }));
+
+/** The demo's dates were written as of this day. */
+const WRITTEN = "2026-10-28";
+const DATED = new Set(["date", "due", "nextMeeting", "asOf", "lastReview", "beneficiaryReview", "effective"]);
+
+/**
+ * The demo households with their meetings, tasks, notes, statements and reviews moved forward by whole weeks, so the
+ * book never shows last month's meeting as upcoming. Birth dates and goal years are left alone.
+ */
+export function freshSeed(today = new Date().toISOString().slice(0, 10)): Household[] {
+  const weeks = Math.max(0, Math.floor((Date.parse(today) - Date.parse(WRITTEN)) / (7 * 864e5)));
+  if (!weeks) return SEED;
+  const move = (d: string) => new Date(Date.parse(d) + weeks * 7 * 864e5).toISOString().slice(0, 10);
+  const walk = (v: unknown, key = ""): unknown => {
+    if (typeof v === "string") return DATED.has(key) && /^\d{4}-\d{2}-\d{2}$/.test(v) ? move(v) : v;
+    if (Array.isArray(v)) return v.map((x) => walk(x, key));
+    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x, k)]));
+    return v;
+  };
+  return walk(SEED) as Household[];
+}
