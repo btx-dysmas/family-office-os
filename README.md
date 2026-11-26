@@ -270,7 +270,12 @@ lib/                       domain logic
 
 Family Office OS is an educational project. Households are fictional, and projections are hypothetical and not investment, tax or legal advice.
 
-## Author
+## Related projects
 
-**Noah Williams** (Dysmas Anastasiou)
-Email: noah.w.williams@protonmail.com
+- **[Intrinsic](https://github.com/btx-dysmas/intrinsic-terminal)** ([live](https://intrinsic-terminal.vercel.app)): an equity research terminal: statements, valuation models, insider trades and fund look-through from SEC data.
+- **[Berkshire Simulator](https://github.com/btx-dysmas/berkshire-simulator)** ([live](https://berkshire-simulator.vercel.app)): Monte Carlo valuation fitted to each company's 10-K history, plus a model of Berkshire Hathaway's float and capital allocation.
+- **[Disclosure](https://github.com/btx-dysmas/disclosure)** ([live](https://disclosure-three.vercel.app)): an SEC filing research workstation for reading, searching and comparing filings.
+
+## Feedback
+
+Found a bug, or a number that doesn't match the filing it came from? [Open an issue](https://github.com/btx-dysmas/family-office-os/issues) with the page and the figure, and I'll trace it back to its source.
